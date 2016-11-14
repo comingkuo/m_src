@@ -1,0 +1,205 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{06B55307-23EA-4C48-80D6-5CA5BDC68141}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\computation\computeManager.cpp" />
+    <ClCompile Include="src\computation\systemWideInfo.cpp" />
+    <ClCompile Include="src\datamanager\dataManager.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\IdataType.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mArrayIntTagNK.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mCharArray.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mCharArrayNoCpy.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mDouble.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mDoubleArray.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mInt.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mIntCharArrayPair.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mIntTagDouble.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mLong.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\data\mLongArray.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\graph\edge.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\graph\Ielement.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\graph\messageIterator.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\graph\mObject.cpp" />
+    <ClCompile Include="src\datamanager\datastructures\graph\vertex.cpp" />
+    <ClCompile Include="src\datamanager\graphreaders\hdfsGraphReader.cpp" />
+    <ClCompile Include="src\datamanager\graphreaders\IgraphReader.cpp" />
+    <ClCompile Include="src\datamanager\graphreaders\sharedDiskGraphReader.cpp" />
+    <ClCompile Include="src\datamanager\graphwriters\hdfsGraphWriter.cpp" />
+    <ClCompile Include="src\datamanager\graphwriters\IgraphWriter.cpp" />
+    <ClCompile Include="src\datamanager\userVertexObject.cpp" />
+    <ClCompile Include="src\dynamicPartitioner.cpp" />
+    <ClCompile Include="src\IAggregator.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Mizan.cpp" />
+    <ClCompile Include="src\unitTest.cpp" />
+    <ClCompile Include="src\utilities\profiler.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\algorithms\AdSim.h" />
+    <ClInclude Include="src\algorithms\complexDimEst.h" />
+    <ClInclude Include="src\algorithms\dimEst.h" />
+    <ClInclude Include="src\algorithms\maxAggregator.h" />
+    <ClInclude Include="src\algorithms\pageRank.h" />
+    <ClInclude Include="src\algorithms\pageRankAllNBR.h" />
+    <ClInclude Include="src\algorithms\pageRankTopK.h" />
+    <ClInclude Include="src\algorithms\SSSP.h" />
+    <ClInclude Include="src\communication\commManager.h" />
+    <ClInclude Include="src\communication\datastructures\bufferpool.h" />
+    <ClInclude Include="src\communication\datastructures\dht.h" />
+    <ClInclude Include="src\communication\datastructures\gdht.h" />
+    <ClInclude Include="src\communication\datastructures\general.h" />
+    <ClInclude Include="src\communication\datastructures\map-queue.h" />
+    <ClInclude Include="src\communication\datastructures\multi-val-map.h" />
+    <ClInclude Include="src\communication\datastructures\multi-val-map2.h" />
+    <ClInclude Include="src\communication\datastructures\MyQueue.h" />
+    <ClInclude Include="src\communication\Icommunicate.h" />
+    <ClInclude Include="src\communication\message.h" />
+    <ClInclude Include="src\communication\pt2pt.h" />
+    <ClInclude Include="src\communication\pt2ptb.h" />
+    <ClInclude Include="src\communication\ring.h" />
+    <ClInclude Include="src\communication\sysComm.h" />
+    <ClInclude Include="src\communication\thread_manager.h" />
+    <ClInclude Include="src\communication\userComm.h" />
+    <ClInclude Include="src\communication\x_pt2ptb.h" />
+    <ClInclude Include="src\computation\computeManager.h" />
+    <ClInclude Include="src\computation\messageManager.h" />
+    <ClInclude Include="src\computation\systemWideInfo.h" />
+    <ClInclude Include="src\datamanager\dataManager.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\IdataType.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mArrayIntTagNK.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mCharArray.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mCharArrayNoCpy.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mDouble.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mDoubleArray.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mInt.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mIntCharArrayPair.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mIntTagDouble.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mKArray.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mKCharArrayPair.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mLong.h" />
+    <ClInclude Include="src\datamanager\datastructures\data\mLongArray.h" />
+    <ClInclude Include="src\datamanager\datastructures\general.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\edge.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\Ielement.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\MessageContainer.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\messageIterator.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\mObject.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\mObjectMini.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\mObject_old.h" />
+    <ClInclude Include="src\datamanager\datastructures\graph\vertex.h" />
+    <ClInclude Include="src\datamanager\graphreaders\hdfsGraphReader.h" />
+    <ClInclude Include="src\datamanager\graphreaders\IgraphReader.h" />
+    <ClInclude Include="src\datamanager\graphreaders\sharedDiskGraphReader.h" />
+    <ClInclude Include="src\datamanager\graphwriters\hdfsGraphWriter.h" />
+    <ClInclude Include="src\datamanager\graphwriters\IgraphWriter.h" />
+    <ClInclude Include="src\datamanager\userVertexObject.h" />
+    <ClInclude Include="src\dynamicPartitioner.h" />
+    <ClInclude Include="src\general.h" />
+    <ClInclude Include="src\IAggregator.h" />
+    <ClInclude Include="src\Icombiner.h" />
+    <ClInclude Include="src\IsuperStep.h" />
+    <ClInclude Include="src\Mizan.h" />
+    <ClInclude Include="src\ring.h" />
+    <ClInclude Include="src\tools\argParser.h" />
+    <ClInclude Include="src\unitTest.h" />
+    <ClInclude Include="src\utilities\profiler.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

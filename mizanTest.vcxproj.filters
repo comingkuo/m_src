@@ -1,0 +1,318 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\dynamicPartitioner.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\IAggregator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mizan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\unitTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\computation\computeManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\computation\systemWideInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\dataManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\userVertexObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\IdataType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mArrayIntTagNK.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mCharArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mCharArrayNoCpy.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mDouble.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mDoubleArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mInt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mIntCharArrayPair.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mIntTagDouble.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mLong.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\data\mLongArray.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\graph\edge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\graph\Ielement.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\graph\messageIterator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\graph\mObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\datastructures\graph\vertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\graphreaders\hdfsGraphReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\graphreaders\IgraphReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\graphreaders\sharedDiskGraphReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\graphwriters\hdfsGraphWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\datamanager\graphwriters\IgraphWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\utilities\profiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\dynamicPartitioner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\general.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IAggregator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Icombiner.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\IsuperStep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mizan.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\unitTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\AdSim.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\complexDimEst.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\dimEst.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\maxAggregator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\pageRank.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\pageRankAllNBR.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\pageRankTopK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\SSSP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\commManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\Icommunicate.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\message.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\pt2pt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\pt2ptb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\ring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\sysComm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\thread_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\userComm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\x_pt2ptb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\bufferpool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\dht.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\gdht.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\general.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\map-queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\multi-val-map.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\multi-val-map2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\communication\datastructures\MyQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\computation\computeManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\computation\messageManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\computation\systemWideInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\dataManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\userVertexObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\general.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\IdataType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mArrayIntTagNK.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mCharArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mCharArrayNoCpy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mDouble.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mDoubleArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mInt.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mIntCharArrayPair.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mIntTagDouble.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mKArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mKCharArrayPair.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mLong.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\data\mLongArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\edge.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\Ielement.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\MessageContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\messageIterator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\mObject.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\mObjectMini.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\mObject_old.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\datastructures\graph\vertex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\graphreaders\hdfsGraphReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\graphreaders\IgraphReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\graphreaders\sharedDiskGraphReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\graphwriters\hdfsGraphWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\datamanager\graphwriters\IgraphWriter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tools\argParser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\utilities\profiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
