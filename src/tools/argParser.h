@@ -33,7 +33,7 @@ public:
 		args.algorithm = 1;
 		args.fs = HDFS;
 		args.partition = hashed;
-		args.migration = NONE;
+		args.migration = MixMigration;
 		args.communication = _pt2ptb;
 		args.superSteps = 20;
 
@@ -43,32 +43,29 @@ public:
 		char * graphName;
 		char * hdfsUserName;
 
+
 		boost::program_options::options_description desc("Options");
 
-		desc.add_options()("help,h", "Print help messages")\
-("algorithm,a",
-				boost::program_options::value<int>(),
+		desc.add_options()("help,h", "Print help messages")("algorithm,a",
+				boost::program_options::value<int>(&args.algorithm),
 				"Algorithm ID:\n\t 1)PageRank (default),\n\t 2)TopK PageRank,\n\t 3)Diameter Estimation,\n\t 4)Ad Simulation")(
-				"supersteps,s", boost::program_options::value<int>(),
-				"Max Number of Supersteps")("workers,w",
-				boost::program_options::value<int>()->required(),
+				"supersteps,s", boost::program_options::value<int>(&args.superSteps),
+				"Linux user name, required in case of\n using option (-fs 1)")(
+				"workers,w", boost::program_options::value<int>(&args.clusterSize)->required(),
 				"Number of Workers/Partitions")("graph,g",
-				boost::program_options::value<string>()->required(),
-				"Input Graph Name")("fs,f",
-				boost::program_options::value<int>()->required(),
+				boost::program_options::value<string>()->required(), "Input Graph Name")("fs",
+				boost::program_options::value<int>(&fileSystem),
 				"Input File system:\n\t 1)HDFS (default),\n\t 2)Local disk")(
-				"partition,p", boost::program_options::value<int>(),
+				"partition,p", boost::program_options::value<int>(&partition),
 				"Partitioning Type:\n\t 1)Hash (default),\n\t 2)range")(
 				"user,u", boost::program_options::value<string>(),
 				"Linux user name, required in case of\n using option (-fs 1)")(
-				"migration,m", boost::program_options::value<int>(),
-				"(Advanced Option) Dynamic load balancing type:\n\t 1)none (default),\n\t 2)Delayed Migration,\n\t 3)Mix Migration Mode,\n\t 4)Pregel Work Stealing");
+				"migration,m", boost::program_options::value<int>(&migration),
+				"(Advanced Option) Dynamic load balancing type:\n\t 1->3)Delayed Migration (default),\n\t 2)none,\n\t 3->1)Mix Migration Mode,\n\t 4)Pregel Work Stealing");
 
 		boost::program_options::variables_map vm;
 		try {
-			boost::program_options::store(
-					boost::program_options::parse_command_line(argc, argv,
-							desc), vm); // can throw
+			boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm); // can throw
 
 			//cout << "args.hdfsUserName = " << args.hdfsUserName << std::endl;
 			//cout << "args.graphName = " << args.graphName << std::endl;
@@ -78,73 +75,43 @@ public:
 						<< desc << std::endl;
 				exit(-1);
 			}
-			if (vm.count("algorithm")) {
-				args.algorithm = (vm["algorithm"].as<int>());
-			}
-			if (vm.count("supersteps")) {
-				args.superSteps = (vm["supersteps"].as<int>());
-			}
-			if (vm.count("workers")) {
-				args.clusterSize = (vm["workers"].as<int>());
+			if (vm.count("user")) {
+				args.hdfsUserName.append(vm["user"].as<std::string>());
 			}
 			if (vm.count("graph")) {
 				args.graphName.append(vm["graph"].as<std::string>());
 			}
-			if (vm.count("fs")) {
-				fileSystem = (vm["fs"].as<int>());
-				if (fileSystem == 1) {
-					args.fs = HDFS;
-					if ((args.fs == HDFS && args.hdfsUserName.length() == 0)) {
-						std::cerr
-								<< "ERROR: You have to specify the linux current user by using (-u username)."
-								<< std::endl;
-						exit(-1);
-					}
-				} else if (fileSystem == 2) {
-					args.fs = OS_DISK_ALL;
-				} else {
-					cerr << "fileSystem Error " << endl;
-					exit(-1);
-				}
-			}
 			if (vm.count("partition")) {
-				partition = (vm["partition"].as<int>());
 				if (partition == 1) {
 					args.partition = hashed;
 				} else if (partition == 2) {
 					args.partition = range;
 				}
 			}
-			if (vm.count("user")) {
-				if (args.fs == HDFS) {
-					args.hdfsUserName.append(vm["user"].as<std::string>());
-				} else {
-					std::cerr
-							<< "ERROR: You have to specify HDFS file System through --fs."
-							<< std::endl;
-					exit(-1);
+			if (vm.count("fs")) {
+				if (fileSystem == 1) {
+					args.fs = HDFS;
+				} else if (fileSystem == 2) {
+					args.fs = OS_DISK_ALL;
 				}
-				//args.fs = HDFS;
 			}
-
 			if (vm.count("migration")) {
-				migration = (vm["migration"].as<int>());
 				if (migration == 1) {
-					args.migration = NONE;
+					args.migration = MixMigration;
 				} else if (migration == 2) {
 					args.migration = DelayMigrationOnly;
 				} else if (migration == 3) {
-					args.migration = MixMigration;
+					args.migration = NONE;
 				} else if (migration == 4) {
 					args.migration = PregelWorkStealing;
 				}
 			}
-			/*if ((args.fs == HDFS && args.hdfsUserName.length() == 0) || args.fs == NOFS) {
-			 std::cerr
-			 << "ERROR: You have to specify the linux current user by using (-u username)."
-			 << std::endl;
-			 exit(-1);
-			 }*/
+			if (args.fs == HDFS && args.hdfsUserName.length() == 0) {
+				std::cerr
+						<< "ERROR: You have to specify the linux current user by using (-u username)."
+						<< std::endl;
+				exit(-1);
+			}
 
 			boost::program_options::notify(vm);
 		} catch (boost::program_options::error& e) {
