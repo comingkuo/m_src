@@ -113,164 +113,30 @@ public:
 		networkStdv = networkStdv / ((float) (networkVec.size()));
 		networkStdv = sqrt(networkStdv);
 
-		/*kuo testing correlation
+		//kuo testing correlation
 		double sigmaXY=0, sigmaX=0, sigmaY=0, correlation=0;
 		for(int i=0;i< timeVec.size();i++) 
-			sigmaXY += ((timeVec[i] - timeAve) * (networkVec[i] - networkAve))
-		for(int i=0; i<timeVec.size(); i++)
+			sigmaXY += ((timeVec[i] - timeAve) * (networkVec[i] - networkAve));
+		for(int i=0;i<timeVec.size();i++)
 			sigmaX += pow(timeVec[i] - timeAve, 2);
 		sigmaX = sqrt(sigmaX);
 		for(int i=0; i<networkVec.size(); i++)
 			sigmaY += pow(networkVec[i] - networkAve, 2);
 		sigmaY = sqrt(sigmaY);
 
+		if (correlation < 0)
+			cout << "kuo --- negative correlation!!!\\n";
+
 		correlation = sigmaXY/(sigmaX*sigmaY);
-		if (correlation >= 0.7"tmp!!") {
-			//high correlation
+		if (correlation >= 0.7) { // strong linear relationship
+			return 3;
+		} else if (correlation >= 0.5) {//moderate relationship
 			return 2;
-		} else if (correlation >= 0.5"tmp!!") {
-			//week correlation
+		} else if (correlation >=0.3) {
 			return 1;
-		}
-		//no correlation
+		} else {
 		return 0;
-
-		*/
-
-		/*if (myRank == 0) {
-		 cout << "timeStdv = " << timeStdv << " networkStdv " << networkStdv
-		 << std::endl;
-		 }*/
-
-		//check for vector similarity
-		long long timePtr;
-		long long networkPtr;
-		/*int timeLoc;
-		 int networkLoc;*/
-		std::set<int> timeLocPos;
-		std::set<int> timeLocNeg;
-		std::set<int> networkLocPos;
-		std::set<int> networkLocNeg;
-
-		std::set<int> timeLoc;
-		std::set<int> networkLoc;
-
-		double zTime;
-		double zNetwork;
-		//double z = 0.30;
-		//kuo clusting test
-		int simClusterCnt = 0;
-		int simClusterSum = 0;
-		//kuo sorting test
-		int simSortCnt = 0;
-		int simSortSum = 0;
-
-		for (int i = 0; i < timeVec.size(); i++) {
-
-			//group by Z value
-			timePtr = timeMap->at(i);
-			networkPtr = networkMap->at(i);
-
-			zTime = (double) (timePtr - timeAve) / (double) timeStdv;
-			zNetwork = (double) (networkPtr - networkAve)
-					/ (double) networkStdv;
-			//kuo for clusting test not for sorting test
-			if (zTime > imbalanceZ) {//kuo 若當下這個worker (worker i)用exec time來評估是positive imbalance的，則插入到timeLocPos(Positive)的第i個位置
-				timeLocPos.insert(i);
-			} else if (zTime < -imbalanceZ) {//kuo 若當下這個worker (worker i)用exec time來評估是negative imbalance的，則插入到timeLocPos(negative)的第i個位置
-				timeLocNeg.insert(i);
-			}
-
-			if (abs(zTime) > imbalanceZ) {
-				if (zNetwork > imbalanceZ) {//kuo 在exec time imbalance的情況下，才考慮outgoing、incoming imbalance的情況
-					networkLocPos.insert(i);
-				} else if (zNetwork < -imbalanceZ) {
-					networkLocNeg.insert(i);
-				}
-			}
-
-			//sort by network and finish time
-			timeLoc.clear();
-			networkLoc.clear();
-
-			for (int j = 0; j < timeVec.size(); j++) {//kuo 假設worker 1- n間有某個worker的值(含worker i )等於目前的這個worker i 的值，則放入timeLoc
-				if (timeVec[j] == timePtr) {//kuo timeVec有經過sort line:87
-					timeLoc.insert(j);//kuo 也就是目前這個worker i 的exec time排在整體的第j順位
-				}
-				if (networkVec[j] == networkPtr) {
-					networkLoc.insert(j);
-				}
-			}
-			
-			bool isSubSet = false;
-			set<int>::iterator it;
-			set<int>::iterator it2;
-
-			for (it = timeLoc.begin(); it != timeLoc.end(); it++) {
-				if (((it2 = networkLoc.find((*it))) != networkLoc.end())) {//如果worker i在timeLoc跟在networkLoc都有相同的順序值，isSubSet=true
-					isSubSet = true;
-				}
-			}
-
-			zTime = (double) abs(timePtr - timeAve) / (double) timeStdv;
-			zNetwork = (double) abs(networkPtr - networkAve)
-					/ (double) networkStdv;
-
-			//cout << "zTime = " << zTime << std::endl;
-			//cout << "zNetwork = " << zNetwork << std::endl;
-
-			//kuo sorting test -- match
-			if (zTime > imbalanceZ && zNetwork > imbalanceZ) {
-				if (isSubSet) {
-					simSortCnt++;
-				}
-				simSortSum++;
-			//kuo sorting test -- mismatch
-			} else if (zTime > imbalanceZ || zNetwork > imbalanceZ) {
-				simSortSum++;
-			}
-		}
-
-		set<int>::iterator it;
-		set<int>::iterator it2;
-
-		for (it = timeLocPos.begin(); it != timeLocPos.end(); it++) {
-			if (((it2 = networkLocPos.find((*it))) != networkLocPos.end())) {
-				simClusterCnt++;
-			}
-			simClusterSum++;
-		}
-		for (it = timeLocNeg.begin(); it != timeLocNeg.end(); it++) {
-			if (((it2 = networkLocNeg.find((*it))) != networkLocNeg.end())) {
-				simClusterCnt++;
-			}
-			simClusterSum++;
-		}
-
-		if (myRank == 0) {
-			cout << "simClusterCnt = " << simClusterCnt << " simClusterSum = "
-					<< simClusterSum << std::endl;
-			cout << "simSortCnt = " << simSortCnt << " simSortSum = "
-					<< simSortSum << std::endl;
-		}
-
-		double clusterBalance = (double) simClusterCnt / (double) simClusterSum;
-
-		double sortBalance = (double) simSortCnt / (double) simSortSum;
-
-		if (clusterBalance >= 0.5 && sortBalance >= 0.5
-				&& simClusterSum > (timeMap->size() / 4)
-				&& simSortSum > (timeMap->size() / 4)) {
-			//high correlation
-			return 2;
-		} else if ((clusterBalance > 0.5
-				&& simClusterSum > (timeMap->size() / 4))
-				|| (sortBalance > 0.5 && simSortSum > (timeMap->size() / 4))) {
-			//week correlation
-			return 1;
-		}
-		//no correlation
-		return 0;
+		}//kuo 尚未考慮負相關
 	}
 
 	int findPEPairLong(std::map<int, long long> * sample,

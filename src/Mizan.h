@@ -72,7 +72,6 @@ private:
 	int subGCount;
 	int mySubGCount;
 	int superStepCounter;
-	int migrateParameter;
 
 	typedef boost::function<void(void)> fun_t;
 	std::map<SYS_CMDS, fun_t> sysGroupMessageContainer;
@@ -157,31 +156,17 @@ public:
 		init();
 
 	}
-	//int inMinOrMax, int inSSInterval, int inSoftOrHard,	int inMigrateParameter
+	//int inMinOrMax, int inSSInterval, int inSoftOrHard
 	void setMigration(migrationMode migrate) {
 		int minOrMax = 1;
-		int migrateParameter = 0;
 
 		if (migrate == DelayMigrationOnly) {
-			configDynamicPart(minOrMax, 1, -1, migrateParameter);
+			configDynamicPart(minOrMax, 1, -1);
 		} else if (migrate == MixMigration) {
-			configDynamicPart(minOrMax, 1, 1, migrateParameter);
+			configDynamicPart(minOrMax, 1, 1);
 		} else if (migrate == PregelWorkStealing) {
 			enableVertexSteal();
 		}
-		/*else if (migrate == 4) {
-		 migrateParameter = 1;
-		 configDynamicPart(minOrMax, 1, 1, migrateParameter);
-		 //		//enableVertexSteal();
-		 } else if (migrate == 5) {
-		 migrateParameter = 2;
-		 configDynamicPart(minOrMax, 1, 1, migrateParameter);
-		 //		//enableVertexSteal();
-		 } else if (migrate == 6) {
-		 migrateParameter = 3;
-		 configDynamicPart(minOrMax, 1, 1, migrateParameter);
-		 //		//enableVertexSteal();
-		 }*/
 	}
 	bool isDynamicPartEnabled() {
 		return dynamicPart;
@@ -198,13 +183,11 @@ public:
 	void setVoteToHalt(bool value) {
 		groupVoteToHalt = value;
 	}
-	void configDynamicPart(int inMinOrMax, int inSSInterval, int inSoftOrHard,
-			int inMigrateParameter) {
+	void configDynamicPart(int inMinOrMax, int inSSInterval, int inSoftOrHard) {
 		dynamicPart = true;
 		minOrMax = inMinOrMax;
 		ssInterval = inSSInterval;
 		softOrHard = inSoftOrHard;
-		migrateParameter = inMigrateParameter;
 
 	}
 	void recvGraphMutation(int size, char * data) {
@@ -350,32 +333,31 @@ public:
 		cm->gatherStats();
 		cm->performDataMutations();
 		bool subTerminate = cm->cleanUp(enableVertices);
-
-		mLong * array = new mLong[8];
-		array[0].setValue(myRank);
-		array[1].setValue(ssActualFinish);
-		array[2].setValue(cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
-		array[3].setValue(cm->getSumInCommLocal() + cm->getSumInCommGlobal());
-		array[4].setValue(cm->getSumOutCommGlobal());
-		array[5].setValue(cm->getSumInCommGlobal());
-		array[6].setValue(cm->getXSumInCommGlobal());
-		array[7].setValue(
-				((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
-		mLongArray value(8, array);
-
-		cm->storeInCommInfo();
-
-		if (subTerminate) {
-			dataPtr.sc->BroadcastSysMessageValue(LateStatsTerminate, value,
-					AFTER_DATABUFFER_PRIORITY);
+		if (subTerminate == true) {
+			terminateMizan();
 		} else {
+			mLong * array = new mLong[8];
+			array[0].setValue(myRank);
+			array[1].setValue(ssActualFinish);
+			array[2].setValue(
+					cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
+			array[3].setValue(
+					cm->getSumInCommLocal() + cm->getSumInCommGlobal());
+			array[4].setValue(cm->getSumOutCommGlobal());
+			array[5].setValue(cm->getSumInCommGlobal());
+			array[6].setValue(cm->getXSumInCommGlobal());
+			array[7].setValue(
+					((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
+			mLongArray value(8, array);
+
+			cm->storeInCommInfo();
+
 			dataPtr.sc->BroadcastSysMessageValue(LateStats, value,
 					AFTER_DATABUFFER_PRIORITY);
 		}
 
 	}
 	void recvLateStats(int size, char * data) {
-
 		//cout << "PE" << myRank << " recvLateStats()" << std::endl;
 		mLongArray value;
 		value.byteDecode(size, data);
@@ -410,18 +392,13 @@ public:
 			}
 		}
 
-		if (sysGroupMessageCounter[LateStatsTerminate] == PECount) {
-			terminateMizan();
-		} else if ((sysGroupMessageCounter[LateStats]
-				+ sysGroupMessageCounter[LateStatsTerminate]) == PECount) {
+		if (sysGroupMessageCounter[LateStats] == PECount) {
 			sysGroupMessageCounter[LateStats] = 0;
-			sysGroupMessageCounter[LateStatsTerminate] = 0;
 
 			(tm.tp).schedule(
 					boost::bind(&Mizan<K, V1, M, A>::bodyRecvEndOfSSTerminate,
 							this));
 		}
-
 	}
 	void bodyRecvEndOfSSTerminate() {
 		//cout << "PE" << myRank << " bodyRecvEndOfSSTerminate()" << std::endl;
@@ -534,7 +511,6 @@ public:
 
 		const clock_t start_Migrate = clock();
 
-		//kuo step 1 (Identify the source of imbalance)
 		double average = 0;
 		bool migrationTest = dp->testForImbalance(&this->peSSResTimeWithDHT,
 				average);
@@ -553,21 +529,17 @@ public:
 
 		if (((superStepCounter) % ssInterval == 0) && migrationTest) {
 
-			//int check
-			//int x = dp->partitionMode(&peVertexSumTime, &peCommOutGlobalCnt);
 			int outMsgScore = dp->partitionMode(&this->peSSResTimeWithDHT,
 					&peCommOutGlobalCnt);
 			int inMsgScore = dp->partitionMode(&this->peSSResTimeWithDHT,
-					&this->peCommInXTotalCnt);
-			//&this->peCommInGlobalCnt);
+					&this->peCommInTotalCnt);// kuo modified 12/11/16
 
 			if (myRank == 0) {
 				std::cout << "Dynamic outMsgScore = " << outMsgScore
 						<< " Dynamic inMsgScore = " << inMsgScore << std::endl;
 			}
 
-			if ((outMsgScore > inMsgScore && migrateParameter == 0)
-					|| migrateParameter == 1) {
+			if (outMsgScore > inMsgScore) {
 				//Migrate for outMessages
 				if (myRank == 0) {
 					cout << "PE" << myRank << " outNetwork based migration "
@@ -579,9 +551,20 @@ public:
 
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
 						&ignoreSet, average);
+				//kuo testing out msg size start
+				for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
+					cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
+				//kuo testing out msg size end
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommOutGlobalCnt, dstNetwork, globalZ);
-
+        // kuo testing start
+				for (int i = 0; i < peCommInGlobalCnt.size(); i++) {
+					cout << "kuo -- incoming global msg size(" << i << "):" << peCommInGlobalCnt.at(i) << std::endl;
+					cout << "kuo -- incoming global X msg size(" << i << "):" << peCommInXGlobalCnt.at(i) << std::endl;
+					cout << "kuo -- incoming total msg size(" << i << "):" << peCommInTotalCnt.at(i) << std::endl;
+					cout << "kuo -- incoming total X msg size(" << i << "):" << peCommInXTotalCnt.at(i) << std::endl;
+        }
+        //kuo testing end
 				if (myTestNetwork) {
 					dp->findCandidateMessageOutGLDiff(minOrMax, vertexZ,
 							messageDiff, dstNetwork, meanMessage);
@@ -591,8 +574,7 @@ public:
 						hardMigrate(dstNetwork);
 					}
 				}
-			} else if ((inMsgScore < outMsgScore && migrateParameter == 0)
-					|| migrateParameter == 2) {
+			} else if (inMsgScore > outMsgScore) {
 				//Migrate InMessages
 				if (myRank == 0) {
 					cout << "PE" << myRank << " InNetwork based migration "
@@ -600,12 +582,15 @@ public:
 				}
 
 				long long messageDiff = 0;
-				float meanMessage = (float) peCommInGlobalCnt[myRank] //(float) peCommInTotalCnt[myRank]
+				float meanMessage = (float) peCommInTotalCnt[myRank] //(float) peCommInGlobalCnt[myRank]
 				/ (float) dm->vertexSetSize();
 
-				//int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt);
-				int dstNetwork = dp->findPEPairLong(&peCommInGlobalCnt,
+				//int dstNetwork = dp->findPEPairLong(&peCommInGlobalCnt);
+				//kuo找配對
+				int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt,
 						&ignoreSet, average);
+				//kuo testing in msg size end
+				//kuo算跟配對的差額
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommInTotalCnt, dstNetwork, globalZ);
 				//&peCommInGlobalCnt, dstNetwork, globalZ);
@@ -619,8 +604,7 @@ public:
 						hardMigrate(dstNetwork);
 					}
 				}
-			} else if ((outMsgScore == inMsgScore && migrateParameter == 0)
-					|| migrateParameter == 3) {
+			} else if (outMsgScore == inMsgScore) {
 				if (myRank == 0) {
 					cout << "PE" << myRank
 							<< " vertex response based migration " << std::endl;
@@ -633,6 +617,10 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 						&ignoreSet, average);
+				//kuo testing exec time start
+				for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
+					cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
+				//kuo testing exec time end
 
 				//cout << "PE" << myRank << " paired with " << dstTime << std::endl;
 				bool myTestTime = dp->multiGrubbsTestLong(timeDiff, outMsgDiff,
@@ -882,8 +870,6 @@ public:
 				&Mizan<K, V1, M, A>::recvGraphMutation, this, _1, _2);
 		sysGroupMessageContainerValue[LateStats] = boost::bind(
 				&Mizan<K, V1, M, A>::recvLateStats, this, _1, _2);
-		sysGroupMessageContainerValue[LateStatsTerminate] = boost::bind(
-				&Mizan<K, V1, M, A>::recvLateStats, this, _1, _2);
 		sysGroupMessageContainer[StealBarrier] = boost::bind(
 				&Mizan<K, V1, M, A>::recvStealBarrier, this);
 		sysGroupMessageContainerValue[Aggregator] = boost::bind(
@@ -903,7 +889,6 @@ public:
 		sysGroupMessageCounter.insert(make_pair(StolenVertexResult, 0));
 		sysGroupMessageCounter.insert(make_pair(GraphMutation, 0));
 		sysGroupMessageCounter.insert(make_pair(LateStats, 0));
-		sysGroupMessageCounter.insert(make_pair(LateStatsTerminate, 0));
 		sysGroupMessageCounter.insert(make_pair(StealBarrier, 0));
 		sysGroupMessageCounter.insert(make_pair(Aggregator, 0));
 
@@ -1061,8 +1046,6 @@ public:
 	void appendIncomeQueueAll(M& message) {
 		if (acceptGate()) {
 			cm->appendIncomeQueueAll(message);
-		} else {
-			ssOutSync++;
 		}
 	}
 	void appendIncomeQueueNbr(K& src, M& message, DATA_CMDS inOut) {
@@ -1070,8 +1053,6 @@ public:
 //				<< src.getValue() << std::endl;
 		if (acceptGate()) {
 			cm->appendIncomeQueueNbr(src, message, inOut);
-		} else {
-			ssOutSync++;
 		}
 	}
 	int ssOutSync;
@@ -1085,9 +1066,6 @@ public:
 	void appendLocalIncomeQueue(K& dst, M& message) {
 		if (acceptGate()) {
 			cm->appendLocalIncomeQueue(dst, message);
-
-		} else {
-			ssOutSync++;
 		}
 	}
 	void enableVertexSteal() {
@@ -1182,10 +1160,6 @@ public:
 	}
 	std::vector<edge<K, V1> *> * getOutEdges(K vertex) {
 		return dm->getOutEdges(vertex);
-	}
-
-	bool getReplication(K vertex) {
-		return dm->getVertexObjByKey(vertex)->getIsReplicated();
 	}
 
 	virtual ~Mizan() {

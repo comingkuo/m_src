@@ -58,12 +58,12 @@ int main(int argc, char** argv) {
 
 		mmk->setVoteToHalt(groupVoteToHalt);
 
-		/*string output;
-		 output.append("/user/");
-		 output.append(myArgs.hdfsUserName.c_str());
-		 output.append("/m_run_output/");
-		 output.append(myArgs.graphName.c_str());
-		 mmk->setOutputPath(output.c_str());*/
+		string output;
+		output.append("/user/");
+		output.append(myArgs.hdfsUserName.c_str());
+		output.append("/m_run_output/");
+		output.append(myArgs.graphName.c_str());
+		mmk->setOutputPath(output.c_str());
 
 		//User Defined aggregator
 		char * maxAgg = "maxAggregator";
