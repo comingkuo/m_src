@@ -104,8 +104,8 @@ private:
 		DATA_CMDS dCode;
 		memcpy(&dCode, recv_buf, sizeof(int));
 		recv_buf += sizeof(int);
-				cout << "(" << rank << ") Received -- " << DATA_CMDS_strings[dCode]
-						<< " message from " << from_rank << endl;
+		//		cout << "(" << getRank() << ") Received -- " << DATA_CMDS_strings[dCode]
+		//				<< " message from " << from_rank << endl;
 		while (dCode != ENDDMSG) {
 
 			if (dCode == SSdata) {
@@ -1104,15 +1104,14 @@ public:
 
 	void AppendBuffMsg(char* buf, int buf_len, int PEdest) {
 
+//		cout << "(" << rank << ") NOT ALLOWED TO USE BUFF DATA" << endl;
+//		cout.flush();
+//		throw(230);
 
 		try {
 			boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
 					this->DATAbuff);
 			bool can_insert = validate_DATAbuffer_insertion(buf_len, PEdest);
-			
-			cout << "(" << rank << ") can_insert:" <<can_insert << endl;
-			cout.flush();
-			
 			if (can_insert) {
 				memcpy(DATA_buffers_cursors[PEdest], buf, buf_len);
 				DATA_buffers_cursors[PEdest] += buf_len;
@@ -1279,7 +1278,6 @@ public:
 
 	void sendMessageOutNbrs(K &srcId, M &msg) {
 
-	
 		int msglen = 0;
 		char *the_msg = msg.byteEncode(msglen);
 
@@ -1310,11 +1308,10 @@ public:
 
 		} //end of vertices
 
-		//found_ranks = false;
 		if (found_ranks) {
-			cout << "(" << rank << ") ALL RANKS FOUND for ID#"
-					<< srcId.getValue() << endl;
-			cout.flush();
+//			cout << "(" << rank << ") ALL RANKS FOUND for ID#"
+//					<< srcId.getValue() << endl;
+//			cout.flush();
 			it = dest_ranks.begin();
 			for (; it != dest_ranks.end(); it++) {
 				int dst_pe = *it;
@@ -1324,8 +1321,8 @@ public:
 					char* buf = (char*) malloc(data_msgsize * sizeof(char)); //bp.request_buffer(index);
 					char *orig_start = buf;
 
-					//msgHeader HeadCode = _DATA;
-					//append_int_val(buf, HeadCode);
+					msgHeader HeadCode = _DATA;
+					append_int_val(buf, HeadCode);
 
 					DATA_CMDS dsys = OutNbrs;
 					append_int_val(buf, dsys);
@@ -1333,14 +1330,14 @@ public:
 					append_K_ID(buf, srcId);
 					append_char_itsSize(buf, the_msg, msglen);
 
-					//dsys = ENDDMSG;
-					//append_int_val(buf, dsys);
+					dsys = ENDDMSG;
+					append_int_val(buf, dsys);
 
 					int buf_size = 0;
 					buf_size = buf - orig_start;
 
-					AppendBuffMsg(orig_start, buf_size, dst_pe);
-					//sendMPICommand(orig_start, buf_size, dst_pe);
+					//AppendBuffMsg(orig_start, buf_size, dst_pe);
+					sendMPICommand(orig_start, buf_size, dst_pe);
 
 					free(orig_start);
 					//bp.set_freeNotSend_buff(index);
@@ -1370,7 +1367,33 @@ public:
 
 	void sendMessageToAll(M &msg) {
 
-		
+		int msglen = 0;
+		char *the_msg = msg.byteEncode(msglen);
+
+		for (int i = 0; i < psize; i++) {
+
+			if (i != rank) {
+				int index;
+				char* buf = bp.request_buffer(index);
+				char *orig_start = buf;
+//			msgHeader head_code = _DATA;
+//			append_int_val(buf, head_code);
+				DATA_CMDS dsys = ALLVTX;
+				append_int_val(buf, dsys);
+				append_char_itsSize(buf, the_msg, msglen);
+//			dsys = ENDDMSG;
+//			append_int_val(buf, dsys);
+				int buf_size = 0;
+				buf_size = buf - orig_start;
+
+				AppendBuffMsg(orig_start, buf_size, i);
+				bp.set_freeNotSend_buff(index);
+			} else {
+				mizan->appendIncomeQueueAll(msg);
+			}
+		}
+
+		free(the_msg);
 	}
 
 

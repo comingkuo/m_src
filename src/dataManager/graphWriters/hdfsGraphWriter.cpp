@@ -4,7 +4,7 @@
  *  Created on: Jul 24, 2012
  *      Author: refops
  */
-
+#include <iostream>
 #include "hdfsGraphWriter.h"
 const char *hdfsGraphWriter::host = "default";
 hdfsGraphWriter::hdfsGraphWriter(char* filePath, int bufferSize, char* host,
@@ -35,7 +35,6 @@ void hdfsGraphWriter::openFile() {
 	}
 }
 void hdfsGraphWriter::writeBlock(int size, char * array) {
-
 	int wSize = hdfsWrite(fs, hdfs_file, array, size);
 	int status = hdfsFlush(fs,hdfs_file);
 

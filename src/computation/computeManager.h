@@ -753,7 +753,6 @@ public:
 		mObject<K, V1, M> * mVertex;
 		for (int i = 0; i < myDataManager->vertexSetSize(); i++) {
 			mVertex = myDataManager->getVertexObjByPos(i);
-
 			sumInCommGlobal = sumInCommGlobal + mVertex->getInGlobal();
 			sumInCommLocal = sumInCommLocal + mVertex->getInLocal();
 

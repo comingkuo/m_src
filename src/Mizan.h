@@ -552,18 +552,18 @@ public:
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
 						&ignoreSet, average);
 				//kuo testing out msg size start
-				for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
-					cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
+				//for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
+				//	cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
 				//kuo testing out msg size end
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommOutGlobalCnt, dstNetwork, globalZ);
         // kuo testing start
-				for (int i = 0; i < peCommInGlobalCnt.size(); i++) {
+				/*for (int i = 0; i < peCommInGlobalCnt.size(); i++) {
 					cout << "kuo -- incoming global msg size(" << i << "):" << peCommInGlobalCnt.at(i) << std::endl;
 					cout << "kuo -- incoming global X msg size(" << i << "):" << peCommInXGlobalCnt.at(i) << std::endl;
 					cout << "kuo -- incoming total msg size(" << i << "):" << peCommInTotalCnt.at(i) << std::endl;
 					cout << "kuo -- incoming total X msg size(" << i << "):" << peCommInXTotalCnt.at(i) << std::endl;
-        }
+        }*/
         //kuo testing end
 				if (myTestNetwork) {
 					dp->findCandidateMessageOutGLDiff(minOrMax, vertexZ,
@@ -618,8 +618,8 @@ public:
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 						&ignoreSet, average);
 				//kuo testing exec time start
-				for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
-					cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
+				//for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
+				//	cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
 				//kuo testing exec time end
 
 				//cout << "PE" << myRank << " paired with " << dstTime << std::endl;

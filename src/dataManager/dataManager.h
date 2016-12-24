@@ -67,8 +67,6 @@ private:
 
 	int storageType;
 
-	int weightCnt;
-
 public:
 
 	//Constructors
@@ -91,9 +89,7 @@ public:
 					maxBufferSize), storageType(inStorageType) {
 		init();
 	}
-	void setWeightCnt(int i){
-		weightCnt = i;
-	}
+
 	int getCountEdges() {
 		return countEdges;
 	}
@@ -170,7 +166,6 @@ public:
 		countEdges = 0;
 		stoleVertexCnt = 0;
 		debugFlag = 0;
-		weightCnt = 0;
 		if (fsInType == HDFS) {
 			myDataConnector = new hdfsGraphReader(inpupGraphPath,
 					readBufferSize);
@@ -211,7 +206,7 @@ public:
 					transBuffer(buffer, bufferSize, tmpStorage, srcCut);
 				}
 			}
-			if (tmpStorage.size() == (4+weightCnt)) {
+			if (tmpStorage.size() == 4) {
 				readOnce(tmpStorage);
 			}
 			free(buffer);
@@ -225,31 +220,12 @@ public:
 
 	void readOnce(std::vector<char *> &tmpStorage) {
 		char tmpSrc[1000], tmpDst[1000], tmpSrcLoc[10], tmpDstLoc[10];
-		char tmpWeight[1000];
 		char * tmpStrPtr1 = tmpStorage.back();
 		strcpy(tmpSrc, tmpStorage.back());
 		tmpStorage.pop_back();
 		char * tmpStrPtr2 = tmpStorage.back();
 		strcpy(tmpSrcLoc, tmpStorage.back());
 		tmpStorage.pop_back();
-
-		//read weights if exists
-		char weightChar[1000];
-		for(int i=0;i<weightCnt;i++){
-			char * tmpPtr = tmpStorage.back();
-			if(i==0){
-				strcpy(weightChar,tmpStorage.back());
-			}
-			else{
-				strcat(weightChar,tmpStorage.back());
-			}
-			if(i+1 < weightCnt){
-				strcat(weightChar,":");
-			}
-			tmpStorage.pop_back();
-			free(tmpPtr);
-		}
-
 		char * tmpStrPtr3 = tmpStorage.back();
 		strcpy(tmpDst, tmpStorage.back());
 		tmpStorage.pop_back();
@@ -269,19 +245,12 @@ public:
 		srcVer.readFromCharArray(tmpSrc);
 		dstVer.readFromCharArray(tmpDst);
 
-		V1 verWeight;
-		if(weightCnt>0){
-			verWeight.readFromCharArray(weightChar);
-		}
-
-		writeToMemGraph(srcVer, srcVerLoc, dstVer, dstVerLoc,verWeight);
+		writeToMemGraph(srcVer, srcVerLoc, dstVer, dstVerLoc);
 	}
 	void transBuffer(char * inputBuffer, int size,
 			std::vector<char *> &tmpStorage, bool &strCut) {
 
 		char tmpSrc[1000], tmpDst[1000], tmpSrcLoc[10], tmpDstLoc[10];
-
-		char tmpWeight[1000];
 		int ptr = 0;
 		int bla = 0;
 		int itemPtr = 0;
@@ -533,7 +502,7 @@ public:
 		return tmp;
 	}
 	int line;
-	void writeToMemGraph(K &src, int srcLoc, K &dst, int dstLoc,V1 verWeight) {
+	void writeToMemGraph(K &src, int srcLoc, K &dst, int dstLoc) {
 		//std::cout << "myComputeRank =" << myComputeRank << " test output: " << dataLocation[src] << std::endl;
 		int myID = myComputeRank;
 
@@ -565,24 +534,14 @@ public:
 				mObject<K, V1, M> * vertexObj = new mObject<K, V1, M>(src);
 				if (storageType == InOutNbrStore
 						|| storageType == OutNbrStore) {
-					if(weightCnt>0){
-						vertexObj->addOutEdge(dst,verWeight);
-					}
-					else {
-						vertexObj->addOutEdge(dst);
-					}
+					vertexObj->addOutEdge(dst);
 					countEdges++;
 				}
 				data.push_back(vertexObj);
 			} else if (storageType == InOutNbrStore
 					|| storageType == OutNbrStore) {
 				mObject<K, V1, M> * vertexObj = this->getVertexObjByKey(src);
-				if(weightCnt>0){
-					vertexObj->addOutEdge(dst,verWeight);
-				}
-				else {
-					vertexObj->addOutEdge(dst);
-				}
+				vertexObj->addOutEdge(dst);
 				countEdges++;
 			}
 
@@ -615,25 +574,14 @@ public:
 				dataLocation[dst] = location;
 				mObject<K, V1, M> * vertexObj = new mObject<K, V1, M>(dst);
 				if (storageType == InOutNbrStore || storageType == InNbrStore) {
-					if(weightCnt>0){
-						vertexObj->addInEdge(src,verWeight);
-					}
-					else {
-						vertexObj->addInEdge(src);
-					}
-
+					vertexObj->addInEdge(src);
 					countEdges++;
 				}
 				data.push_back(vertexObj);
 			} else if (storageType == InOutNbrStore
 					|| storageType == InNbrStore) {
 				mObject<K, V1, M> * vertexObj = this->getVertexObjByKey(dst);
-				if(weightCnt>0){
-					vertexObj->addInEdge(src,verWeight);
-				}
-				else {
-					vertexObj->addInEdge(src);
-				}
+				vertexObj->addInEdge(src);
 				countEdges++;
 			}
 		} /*else if (dstLoc != myID && srcLoc == myID
@@ -1090,9 +1038,16 @@ public:
 		int blockSize = writer.getConfBlockSize();
 		char * blockData = (char*) calloc(blockSize, sizeof(char));
 		int blockDataPtr = 0;
+    //kuo datasize
+    //cout << "data size:" << data.size()<< "\n";
+    //kuo
+
 		for (int i = 0; i < data.size(); i++) {
 			tmp = data[i];
 			string outData = tmp->toString();
+      //kuo
+      //cout << "kuo data:" << outData <<"\n";
+      //kuo
 			int strLen = outData.length() + 1;
 			if (blockSize > (blockDataPtr + strLen)) {
 				strcat(blockData, outData.c_str());
@@ -1104,6 +1059,10 @@ public:
 				blockDataPtr = 0;
 			}
 		}
+    //add by kuo
+    //if(blockSize > blockDataPtr && blockDataPtr !=0)
+				writer.writeBlock(blockDataPtr, blockData);
+
 		writer.closeTheFile();
 		free(blockData);
 	}

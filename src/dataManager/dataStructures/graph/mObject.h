@@ -30,7 +30,6 @@ private:
 	bool terminated;
 	int curSuperStep;
 	double ssResTime;
-	bool isReplicated;
 
 	std::vector<edge<K, V1> *> outEdges;
 	std::vector<edge<K, V1> *> inEdges;
@@ -63,7 +62,7 @@ public:
 		vertexVal = verVal;
 		init();
 	}
-	void enable() {
+	void enable(){
 		terminated = false;
 	}
 	virtual ~mObject() {
@@ -76,13 +75,6 @@ public:
 			delete (inEdges[i]);
 		}
 	}
-	void setIsReplicated(bool state) {
-		isReplicated = state;
-	}
-	bool getIsReplicated(){
-		return isReplicated;
-	}
-
 	void setOutLocal(int inVal) {
 		SSOutMsgCntLocal = inVal;
 	}
@@ -182,7 +174,7 @@ public:
 	void deleteOutEdge(K vertex) {
 		for (int i = 0; i < outEdges.size(); i++) {
 			if (vertex == outEdges[i]->getID()) {
-				delete (outEdges[i]);
+				delete(outEdges[i]);
 				outEdges.erase(outEdges.begin() + i);
 				break;
 			}
@@ -191,7 +183,7 @@ public:
 	void deleteInEdge(K vertex) {
 		for (int i = 0; i < inEdges.size(); i++) {
 			if (vertex == inEdges[i]->getID()) {
-				delete (inEdges[i]);
+				delete(inEdges[i]);
 				inEdges.erase(inEdges.begin() + i);
 				break;
 			}
@@ -791,7 +783,7 @@ public:
 				objPtr = ((int) data[ptr]);
 				value.byteDecode(objPtr, &data[ptr + 1]);
 				ptr = ptr + objPtr + 1;
-				edge<K, V1> * ed = new edge<K, V1>(vertex, value);
+				edge<K, V1> * ed = new edge<K, V1>(vertex,value);
 				outEdges.push_back(ed);
 			}
 
@@ -822,7 +814,7 @@ public:
 				objPtr = ((int) data[ptr]);
 				value.byteDecode(objPtr, &data[ptr + 1]);
 				ptr = ptr + objPtr + 1;
-				edge<K, V1> * myEdge = new edge<K, V1>(vertex, value);
+				edge<K, V1> * myEdge = new edge<K, V1>(vertex,value);
 				inEdges.push_back(myEdge);
 			}
 		}
