@@ -32,7 +32,7 @@ public:
 		//default args
 		args.algorithm = 1;
 		args.fs = HDFS;
-		args.partition = hashed;
+		args.partition = range;
 		args.migration = MixMigration;
 		args.communication = _pt2ptb;
 		args.superSteps = 20;

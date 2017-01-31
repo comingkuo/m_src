@@ -604,14 +604,12 @@ public:
 						hardMigrate(dstNetwork);
 					}
 				}
-			} else if (outMsgScore == inMsgScore) {
+			} else if (outMsgScore == 0 && outMsgScore == inMsgScore) {
 				if (myRank == 0) {
 					cout << "PE" << myRank
 							<< " vertex response based migration " << std::endl;
 				}
 
-				long long outMsgDiff = 0;
-				long long inMsgDiff = 0;
 				double timeDiff = 0;
 				double meanMessage = cm->getVerAveResTime();
 
@@ -623,17 +621,63 @@ public:
 				//kuo testing exec time end
 
 				//cout << "PE" << myRank << " paired with " << dstTime << std::endl;
-				bool myTestTime = dp->multiGrubbsTestLong(timeDiff, outMsgDiff,
+				bool myTestTime = dp->grubbsTestDouble(timeDiff,
+					&peSSResTimeWithDHT, dstTime, globalZ);
+				/*bool myTestTime = dp->multiGrubbsTestLong(timeDiff, outMsgDiff,
 						inMsgDiff, &peSSResTimeWithDHT, &peCommOutGlobalCnt,
-						&peCommInTotalCnt, dstTime, globalZ);
+						&peCommInTotalCnt, dstTime, globalZ);*/
 				//&peCommInGlobalCnt, dstTime, globalZ);
 
 				if (myTestTime) {
-					dp->findCandidateExecTime(minOrMax, vertexZ, timeDiff,
-							outMsgDiff, inMsgDiff, dstTime, meanMessage);
+					dp->findCandidatePureExecTime(minOrMax, vertexZ, timeDiff,
+							dstTime, meanMessage);
 					if (softOrHard == -1) {
 						softMigrate(dstTime);
 					} else {
+						hardMigrate(dstTime);
+					}
+				}
+			} else { //add by kuo, mix outgoing and incoming
+				if (myRank == 0) {
+					cout << "PE" << myRank
+						<< " vertex response based migration " << std::endl;
+				}
+
+
+				long long outMsgDiff = 0;
+				long long inMsgDiff = 0;
+				double timeDiff = 0;
+				double meanMessage = cm->getVerAveResTime();
+				double outMeanMessage = (double) cm->getAveOutCommGlobal(); 
+				double inMeanMessage = (double)peCommInTotalCnt[myRank];
+				//kuo
+				long long TotalOutMessage=0, TotalInMessage=0;
+				for (int i = 0; i < peCommInTotalCnt.size(); i++) {
+					TotalInMessage += peCommInTotalCnt[i];
+					TotalOutMessage += peCommOutGlobalCnt[i];
+				}
+				/*double inMsgPropotion = (double) peCommInTotalCnt[myRank] / TotalInMessage;
+				double outMsgPropotion = (double)peCommOutGlobalCnt[myRank] / TotalOutMessage;
+				double outMsgPer = inMsgPropotion + outMsgPropotion;
+				outMsgPer = outMsgPropotion / outMsgPer;*/
+        double outMsgPer = 0.5;
+				//kuo 
+
+				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
+					&ignoreSet, average);
+
+				bool myTestTime = dp->multiGrubbsTestLong(outMsgDiff,
+					inMsgDiff, &peCommOutGlobalCnt,
+					&peCommInTotalCnt, dstTime, globalZ, outMsgPer);
+
+
+				if (myTestTime) {
+					dp->findCandidateMix(minOrMax, vertexZ,
+						outMsgDiff, inMsgDiff, dstTime, outMeanMessage, inMeanMessage,outMsgPer);
+					if (softOrHard == -1) {
+						softMigrate(dstTime);
+					}
+					else {
 						hardMigrate(dstTime);
 					}
 				}

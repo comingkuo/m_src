@@ -179,8 +179,7 @@ public:
 
 		return pairPos;
 	}
-	void findCandidateExecTime(int maxMin, float vertexZ, double timeDiff,
-			long long outDiff, long long inDiff, int dst, double mean) {
+	void findCandidatePureExecTime(int maxMin, float vertexZ, double timeDiff, int dst, double mean) {
 		dataManagerPtr->lockDataManager();
 		double stdv = 0;
 		double tmp;
@@ -190,29 +189,113 @@ public:
 			//cout << " tmpObj->getSSResTime() = " << tmpObj->getSSResTime() << std::endl;
 			stdv = stdv + tmp;
 		}
-		stdv = stdv / ((double) (dataManagerPtr->vertexSetSize()));
+		stdv = stdv / ((double)(dataManagerPtr->vertexSetSize()));
 		stdv = sqrt(stdv);
-		double reqZ = vertexZ * (float) maxMin;
+		double reqZ = vertexZ * (float)maxMin;
 		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << " mean " << mean << std::endl;
 		double vz;
-		long long sumOutMsg = 0;
-		long long sumInMsg = 0;
 		double sumTime = 0;
 		int countNodes = 0;
 		double comm = 0;
+
 		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
 			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
 			if (!tmpObj->isHalted()) {
 				vz = (tmpObj->getSSResTime() - mean) / stdv;
 				//cout << "PE " << myRank << " vz = " << vz << std::endl;
 				/*comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
-				 - ((double) tmpObj->getMessageCountLocal());*/
+				- ((double) tmpObj->getMessageCountLocal());*/
 				//cout << " comm = " << comm << endl;
 				if (reqZ < vz && (!tmpObj->isHalted())
-						&& (timeDiff - sumTime - tmpObj->getSSResTime())
-								> (-1)) {
+					&& (timeDiff - sumTime - tmpObj->getSSResTime())
+				>(-1)) {
 					countNodes++;
 					sumTime = sumTime + tmpObj->getSSResTime();
+					//sumInMsg = sumInMsg + tmpObj->getInGlobal();
+					dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
+					dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
+						dst);
+				}
+				else {
+					dataManagerPtr->getVertexObjByPos(i)->resetMigrationMark();
+				}
+			}
+			if (sumTime > timeDiff) {
+				break;
+			}
+		}
+		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
+			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()
+				&& tmpObj->getSSResTime() > 0
+				&& (timeDiff - sumTime - tmpObj->getSSResTime()) > (-1)) {
+
+				countNodes++;
+				sumTime = sumTime + tmpObj->getSSResTime();
+
+				dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
+				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
+			}
+
+			if (sumTime > timeDiff) {
+				break;
+			}
+		}
+
+		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
+			<< " nodes with TD = " << (timeDiff - sumTime) 
+			 << " to "
+			<< dst << " original timeDIff = " << timeDiff << std::endl;
+		dataManagerPtr->unlockDataManager();
+	}
+	void findCandidateMix(int maxMin, float vertexZ,
+			long long outDiff, long long inDiff, int dst, double outMean, double inMean, double outMsgPer) {
+		dataManagerPtr->lockDataManager();
+		//kuo
+		double outStdv = 0;
+		double inStdv = 0;
+		double inMsgPer = 1.0 - outMsgPer;
+		//kuo
+		double tmp;
+
+		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
+			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			tmp = pow(outMean - tmpObj->getOutGlobal(), 2); 
+			outStdv = outStdv + tmp;
+			tmp = pow(inMean - tmpObj->getInTotal(), 2); 
+			inStdv = inStdv + tmp;
+			//cout << " tmpObj->getSSResTime() = " << tmpObj->getSSResTime() << std::endl;
+		}
+		inStdv = inStdv / ((double)(dataManagerPtr->vertexSetSize()));
+		inStdv = sqrt(inStdv);
+		outStdv = outStdv / ((double)(dataManagerPtr->vertexSetSize()));
+		outStdv = sqrt(outStdv);
+		double reqZ = vertexZ * (float) maxMin;
+		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << " mean " << mean << std::endl;
+		double vz;
+		//kuo
+		double outVz, inVz;
+		//kuo
+
+
+		long long sumOutMsg = 0;
+		long long sumInMsg = 0;
+		int countNodes = 0;
+		double comm = 0;
+		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
+			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			if (!tmpObj->isHalted()) {
+				outVz = (tmpObj->getOutGlobal() - outMean) / outStdv;
+				inVz = (tmpObj->getInTotal() - inMean) / inStdv;
+
+				vz = (outVz * outMsgPer) + (inVz * inMsgPer);
+				//cout << "PE " << myRank << " Mixvz = " << vz << std::endl;
+				/*comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
+				 - ((double) tmpObj->getMessageCountLocal());*/
+				//cout << " comm = " << comm << endl;
+				if (reqZ < vz && (!tmpObj->isHalted()) &&
+					((inDiff - sumInMsg - tmpObj->getInTotal()) >(-1) || (outDiff - sumOutMsg - tmpObj->getOutGlobal()) > (-1))) {
+					countNodes++;
 					sumOutMsg = sumOutMsg + tmpObj->getOutGlobal();
 					sumInMsg = sumInMsg + tmpObj->getInTotal();
 					//sumInMsg = sumInMsg + tmpObj->getInGlobal();
@@ -223,13 +306,15 @@ public:
 					dataManagerPtr->getVertexObjByPos(i)->resetMigrationMark();
 				}
 			}
-			if (sumTime > timeDiff) {
+			if (sumOutMsg > outDiff || sumInMsg > inDiff) {
 				break;
 			}
 		}
 		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
 			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()) {
+			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()
+					&& (tmpObj->getInTotal() > 0 || tmpObj->getOutGlobal() > 0)
+				    && ((inDiff - sumInMsg - tmpObj->getInTotal()) >(-1) || (outDiff - sumOutMsg - tmpObj->getOutGlobal()) > (-1))) {
 
 				countNodes++;
 				sumOutMsg = sumOutMsg + tmpObj->getOutGlobal();
@@ -244,9 +329,9 @@ public:
 			}
 		}
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
-				<< " nodes with TD = " << (timeDiff - sumTime) << "-"
-				<< (outDiff - sumOutMsg) << "-" << (inDiff - sumInMsg) << " to "
-				<< dst << " original timeDIff = " << timeDiff << std::endl;
+				<< " nodes with TD(out + in) = "
+				<< (outDiff - sumOutMsg) << "+" << (inDiff - sumInMsg) << " to "
+				<< dst << " original MixDIff = " << std::endl;
 		dataManagerPtr->unlockDataManager();
 	}
 	void findCandidateMessageInComm(int maxMin, float vertexZ, long long diff,
@@ -383,53 +468,92 @@ public:
 
 		dataManagerPtr->unlockDataManager();
 	}
-	bool multiGrubbsTestLong(double &msgDiff, long long &diff1,
-			long long &diff2, std::map<int, long long> * sample,
-			std::map<int, long long> * sample1,
-			std::map<int, long long> * sample2, int dst, float globalZ) {
+	bool multiGrubbsTestLong(long long &diff1, long long &diff2,
+			std::map<int, long long> * sample1,//out msg diff
+			std::map<int, long long> * sample2, int dst, float globalZ, double outMsgPer) {
 
-		float mean = 0;
 		float mean1 = 0;
 		float mean2 = 0;
 
-		for (int i = 0; i < sample->size(); i++) {
-			mean = mean + sample->at(i);
-
+		for (int i = 0; i < sample1->size(); i++) {
 			mean1 = mean1 + sample1->at(i);
 			mean2 = mean2 + sample2->at(i);
 		}
 		//cout << "PE" << myRank << " mean = " << mean << " dst = " << dst
 		//<< std::endl;
-		if (mean == 0 || dst == myRank) {
+		if ((mean1 == 0 && mean2==0)|| dst == myRank) {
 			return false;
 		}
-		mean = mean / (float) sample->size();
-		mean1 = mean1 / (float) sample->size();
-		mean2 = mean2 / (float) sample->size();
+		mean1 = mean1 / (float) sample1->size();
+		mean2 = mean2 / (float) sample1->size();
 		//cout << "PE"<<myRank<<" mean = " << mean << " dst = " << dst<< std::endl;
 
-		float stdv = 0;
+		float stdv,outStdv = 0, inStdv=0;
 		float tmp;
-		for (int i = 0; i < sample->size(); i++) {
-			tmp = pow(mean - (float) sample->at(i), 2);
-			stdv = stdv + tmp;
+		for (int i = 0; i < sample1->size(); i++) {
+			tmp = pow(mean1 - (float) sample1->at(i), 2);
+			outStdv = outStdv + tmp;
+			tmp = pow(mean2 - (float)sample2->at(i), 2);
+			inStdv = inStdv + tmp;
 		}
-		stdv = stdv / (float) (sample->size());
-		stdv = sqrt(stdv);
-		msgDiff = sample->at(myRank) - ((sample->at(dst)==0)?mean:sample->at(dst)); //mean; //
+		outStdv = outStdv / (float) (sample1->size());
+		outStdv = sqrt(outStdv);
+		inStdv = inStdv / (float)(sample1->size());
+		inStdv = sqrt(inStdv);
+		stdv = (outStdv * outMsgPer) + (inStdv * (1.0 - outMsgPer));
 		diff1 = sample1->at(myRank) - ((sample1->at(dst)==0)?mean1:sample1->at(dst)); //mean1;
 		diff2 = sample2->at(myRank) - ((sample2->at(dst)==0)?mean2:sample2->at(dst)); //mean2;
-		float z = msgDiff / stdv;
+
+		//kuo
+		double mixDiff = (double)diff1 / outMsgPer;
+		mixDiff += (double)diff2 / (1 - outMsgPer);
+		//kuo
+		float z = mixDiff / stdv;
 
 		//cout << "PE" << myRank << " z = " << z << std::endl;
 		//<< " diff = " << diff/2 << " sample->at(myRank) = " << sample->at(myRank) << " stdv = " << stdv << endl;
 
 		diff1 = diff1 / 2;
 		diff2 = diff2 / 2;
-		msgDiff = msgDiff / 2;
 		if (z < globalZ) {
 			return false;
 		} else {
+			return true;
+		}
+
+	}
+	bool grubbsTestDouble(double &diff, std::map<int, long long> * sample,
+		int dst, float globalZ) {
+		float mean = 0;
+		for (int i = 0; i < sample->size(); i++) {
+			mean = mean + sample->at(i);
+		}
+		if (mean == 0 || dst == myRank) {
+			return false;
+		}
+		mean = mean / (float)sample->size();
+		//cout << "PE"<<myRank<<" mean = " << mean << " dst = " << dst<< std::endl;
+
+		float stdv = 0;
+		float tmp;
+		for (int i = 0; i < sample->size(); i++) {
+			tmp = pow(mean - (float)sample->at(i), 2);
+			stdv = stdv + tmp;
+		}
+		stdv = stdv / (float)(sample->size());
+		stdv = sqrt(stdv);
+		diff = sample->at(myRank) - ((sample->at(dst) == 0) ? mean : sample->at(dst)); //mean; //
+		float z = diff / stdv;
+
+		cout << "kuo(dynamicPartitioner.h line546): Timediff: "<< diff << endl;
+		//cout << "PE" << myRank << " z = " << z << std::endl;
+		//<< " diff = " << diff/2 << " sample->at(myRank) = " << sample->at(myRank) << " stdv = " << stdv << endl;
+
+		diff = diff / 2;
+		if (z < globalZ) {
+			return false;
+		}
+		else {
 			return true;
 		}
 
