@@ -3,6 +3,10 @@
  *
  *  Created on: Mar 9, 2013
  *      Author: refops
+ *  Modified on: Feb 1, 2017
+ *      Authir: Kuo
+ *  Description:
+ *      Fix) Can not choose partition type and Migration type.
  */
 
 #ifndef ARGPARSER_H_
@@ -56,12 +60,12 @@ public:
 				boost::program_options::value<string>()->required(), "Input Graph Name")("fs",
 				boost::program_options::value<int>(&fileSystem),
 				"Input File system:\n\t 1)HDFS (default),\n\t 2)Local disk")(
-				"partition,p", boost::program_options::value<int>(&partition),
+				"partition,p", boost::program_options::value<int>(),
 				"Partitioning Type:\n\t 1)Hash (default),\n\t 2)range")(
 				"user,u", boost::program_options::value<string>(),
 				"Linux user name, required in case of\n using option (-fs 1)")(
-				"migration,m", boost::program_options::value<int>(&migration),
-				"(Advanced Option) Dynamic load balancing type:\n\t 1->3)Delayed Migration (default),\n\t 2)none,\n\t 3->1)Mix Migration Mode,\n\t 4)Pregel Work Stealing");
+				"migration,m", boost::program_options::value<int>(),
+				"Dynamic load balancing type:\n\t 1)Migration (default),\n\t 2)none,\n\t");
 
 		boost::program_options::variables_map vm;
 		try {
@@ -82,6 +86,7 @@ public:
 				args.graphName.append(vm["graph"].as<std::string>());
 			}
 			if (vm.count("partition")) {
+        partition = vm["partition"].as<int>();
 				if (partition == 1) {
 					args.partition = hashed;
 				} else if (partition == 2) {
@@ -89,6 +94,7 @@ public:
 				}
 			}
 			if (vm.count("fs")) {
+        fileSystem = vm["fs"].as<int>();
 				if (fileSystem == 1) {
 					args.fs = HDFS;
 				} else if (fileSystem == 2) {
@@ -96,14 +102,11 @@ public:
 				}
 			}
 			if (vm.count("migration")) {
+        migration = vm["migration"].as<int>();
 				if (migration == 1) {
 					args.migration = MixMigration;
 				} else if (migration == 2) {
-					args.migration = DelayMigrationOnly;
-				} else if (migration == 3) {
 					args.migration = NONE;
-				} else if (migration == 4) {
-					args.migration = PregelWorkStealing;
 				}
 			}
 			if (args.fs == HDFS && args.hdfsUserName.length() == 0) {

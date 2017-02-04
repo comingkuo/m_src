@@ -21,7 +21,7 @@ enum fileStatus {
 };
 
 enum migrationMode{
-	NONE,DelayMigrationOnly,MixMigration,PregelWorkStealing,
+	NONE,MixMigration,
 };
 enum fileSystem {
 	HDFS, OS_DISK_MASTER, OS_DISK_ALL,

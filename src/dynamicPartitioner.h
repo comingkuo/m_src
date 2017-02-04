@@ -179,7 +179,7 @@ public:
 
 		return pairPos;
 	}
-	void findCandidatePureExecTime(int maxMin, float vertexZ, double timeDiff, int dst, double mean) {
+	void findCandidatePureExecTime(float vertexZ, double timeDiff, int dst, double mean) {
 		dataManagerPtr->lockDataManager();
 		double stdv = 0;
 		double tmp;
@@ -191,7 +191,7 @@ public:
 		}
 		stdv = stdv / ((double)(dataManagerPtr->vertexSetSize()));
 		stdv = sqrt(stdv);
-		double reqZ = vertexZ * (float)maxMin;
+		double reqZ = vertexZ;
 		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << " mean " << mean << std::endl;
 		double vz;
 		double sumTime = 0;
@@ -248,13 +248,13 @@ public:
 			<< dst << " original timeDIff = " << timeDiff << std::endl;
 		dataManagerPtr->unlockDataManager();
 	}
-	void findCandidateMix(int maxMin, float vertexZ,
+	void findCandidateMix(float vertexZ,
 			long long outDiff, long long inDiff, int dst, double outMean, double inMean, double outMsgPer) {
 		dataManagerPtr->lockDataManager();
 		//kuo
+		//double outMsgPer = 0.5;
 		double outStdv = 0;
 		double inStdv = 0;
-		double inMsgPer = 1.0 - outMsgPer;
 		//kuo
 		double tmp;
 
@@ -270,7 +270,7 @@ public:
 		inStdv = sqrt(inStdv);
 		outStdv = outStdv / ((double)(dataManagerPtr->vertexSetSize()));
 		outStdv = sqrt(outStdv);
-		double reqZ = vertexZ * (float) maxMin;
+		double reqZ = vertexZ;
 		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << " mean " << mean << std::endl;
 		double vz;
 		//kuo
@@ -288,7 +288,7 @@ public:
 				outVz = (tmpObj->getOutGlobal() - outMean) / outStdv;
 				inVz = (tmpObj->getInTotal() - inMean) / inStdv;
 
-				vz = (outVz * outMsgPer) + (inVz * inMsgPer);
+				vz = (outVz * outMsgPer) + (inVz * (1 - outMsgPer));
 				//cout << "PE " << myRank << " Mixvz = " << vz << std::endl;
 				/*comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
 				 - ((double) tmpObj->getMessageCountLocal());*/
@@ -334,7 +334,7 @@ public:
 				<< dst << " original MixDIff = " << std::endl;
 		dataManagerPtr->unlockDataManager();
 	}
-	void findCandidateMessageInComm(int maxMin, float vertexZ, long long diff,
+	void findCandidateMessageInComm(float vertexZ, long long diff,
 			int dst, float mean) {
 		dataManagerPtr->lockDataManager();
 
@@ -348,7 +348,7 @@ public:
 		}
 		stdv = stdv / ((float) (dataManagerPtr->vertexSetSize()));
 		stdv = sqrt(stdv);
-		float reqZ = vertexZ * (float) maxMin;
+		float reqZ = vertexZ;
 		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << std::endl;
 		float vz;
 		long long sumComm = 0;
@@ -403,7 +403,7 @@ public:
 
 		dataManagerPtr->unlockDataManager();
 	}
-	void findCandidateMessageOutGLDiff(int maxMin, float vertexZ,
+	void findCandidateMessageOutGLDiff(float vertexZ,
 			long long diff, int dst, float mean) {
 		dataManagerPtr->lockDataManager();
 
@@ -417,7 +417,7 @@ public:
 		}
 		stdv = stdv / ((float) (dataManagerPtr->vertexSetSize()));
 		stdv = sqrt(stdv);
-		float reqZ = vertexZ * (float) maxMin;
+		float reqZ = vertexZ;
 		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << std::endl;
 		float vz;
 		long long sumComm = 0;
@@ -474,6 +474,7 @@ public:
 
 		float mean1 = 0;
 		float mean2 = 0;
+		//double outMsgPer = 0.5;
 
 		for (int i = 0; i < sample1->size(); i++) {
 			mean1 = mean1 + sample1->at(i);

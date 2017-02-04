@@ -3,6 +3,9 @@
  *
  *  Created on: Mar 28, 2012
  *      Author: refops
+ *  Fix on: Jan 31, 2017
+ *		Author: Kou
+ *  Description: Main function of Mizan
  */
 
 #ifndef MIZAN_H_
@@ -102,7 +105,6 @@ private:
 	int inThreadCnt;
 
 	bool dynamicPart;
-	int minOrMax;
 	int ssInterval;
 	int softOrHard;
 	double globalZ;
@@ -133,7 +135,7 @@ public:
 		dynamicPart = false;
 		//globalZ = 0.95;
 		//myZ = 1.27;
-		myZ = 1.96;
+		myZ = 1.96;		//zscore threshold
 		globalZ = myZ;
 		vertexZ = myZ;
 		stealEnabled = false;
@@ -156,17 +158,12 @@ public:
 		init();
 
 	}
-	//int inMinOrMax, int inSSInterval, int inSoftOrHard
-	void setMigration(migrationMode migrate) {
-		int minOrMax = 1;
-
-		if (migrate == DelayMigrationOnly) {
-			configDynamicPart(minOrMax, 1, -1);
-		} else if (migrate == MixMigration) {
-			configDynamicPart(minOrMax, 1, 1);
-		} else if (migrate == PregelWorkStealing) {
-			enableVertexSteal();
+	//int inSSInterval, int inSoftOrHard
+	void setMigration(migrationMode migrate) {// set Migrate type: NONE or MixMigration
+		if (migrate == MixMigration) {
+			configDynamicPart(1, 1);
 		}
+		// else if(migrate == NONE)
 	}
 	bool isDynamicPartEnabled() {
 		return dynamicPart;
@@ -183,12 +180,10 @@ public:
 	void setVoteToHalt(bool value) {
 		groupVoteToHalt = value;
 	}
-	void configDynamicPart(int inMinOrMax, int inSSInterval, int inSoftOrHard) {
+	void configDynamicPart(int inSSInterval, int inSoftOrHard) {
 		dynamicPart = true;
-		minOrMax = inMinOrMax;
 		ssInterval = inSSInterval;
 		softOrHard = inSoftOrHard;
-
 	}
 	void recvGraphMutation(int size, char * data) {
 		//cout << "PE" << myRank << " recvGraphMutation()" << std::endl;
@@ -566,7 +561,7 @@ public:
         }*/
         //kuo testing end
 				if (myTestNetwork) {
-					dp->findCandidateMessageOutGLDiff(minOrMax, vertexZ,
+					dp->findCandidateMessageOutGLDiff(vertexZ,
 							messageDiff, dstNetwork, meanMessage);
 					if (softOrHard == -1) {
 						softMigrate(dstNetwork);
@@ -596,7 +591,7 @@ public:
 				//&peCommInGlobalCnt, dstNetwork, globalZ);
 
 				if (myTestNetwork) {
-					dp->findCandidateMessageInComm(minOrMax, vertexZ,
+					dp->findCandidateMessageInComm(vertexZ,
 							messageDiff, dstNetwork, meanMessage);
 					if (softOrHard == -1) {
 						softMigrate(dstNetwork);
@@ -629,7 +624,7 @@ public:
 				//&peCommInGlobalCnt, dstTime, globalZ);
 
 				if (myTestTime) {
-					dp->findCandidatePureExecTime(minOrMax, vertexZ, timeDiff,
+					dp->findCandidatePureExecTime(vertexZ, timeDiff,
 							dstTime, meanMessage);
 					if (softOrHard == -1) {
 						softMigrate(dstTime);
@@ -656,11 +651,10 @@ public:
 					TotalInMessage += peCommInTotalCnt[i];
 					TotalOutMessage += peCommOutGlobalCnt[i];
 				}
-				/*double inMsgPropotion = (double) peCommInTotalCnt[myRank] / TotalInMessage;
+				double inMsgPropotion = (double) peCommInTotalCnt[myRank] / TotalInMessage;
 				double outMsgPropotion = (double)peCommOutGlobalCnt[myRank] / TotalOutMessage;
 				double outMsgPer = inMsgPropotion + outMsgPropotion;
-				outMsgPer = outMsgPropotion / outMsgPer;*/
-        double outMsgPer = 0.5;
+				outMsgPer = outMsgPropotion / outMsgPer;
 				//kuo 
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
@@ -672,8 +666,8 @@ public:
 
 
 				if (myTestTime) {
-					dp->findCandidateMix(minOrMax, vertexZ,
-						outMsgDiff, inMsgDiff, dstTime, outMeanMessage, inMeanMessage,outMsgPer);
+					dp->findCandidateMix(vertexZ,
+						outMsgDiff, inMsgDiff, dstTime, outMeanMessage, inMeanMessage, outMsgPer);
 					if (softOrHard == -1) {
 						softMigrate(dstTime);
 					}
@@ -693,7 +687,7 @@ public:
 			 &peCommOutGlobalCnt, dstNetwork, globalZ);
 
 			 if (myTestNetwork) {
-			 dp->findCandidateMessageOutGLDiff(minOrMax, vertexZ,
+			 dp->findCandidateMessageOutGLDiff(vertexZ,
 			 messageDiff, dstNetwork, meanMessage);
 			 if (softOrHard == -1) {
 			 softMigrate(dstNetwork);
