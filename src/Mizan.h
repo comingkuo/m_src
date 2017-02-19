@@ -106,7 +106,6 @@ private:
 
 	bool dynamicPart;
 	int ssInterval;
-	int softOrHard;
 	double globalZ;
 	double vertexZ;
 
@@ -158,10 +157,9 @@ public:
 		init();
 
 	}
-	//int inSSInterval, int inSoftOrHard
 	void setMigration(migrationMode migrate) {// set Migrate type: NONE or MixMigration
 		if (migrate == MixMigration) {
-			configDynamicPart(1, 1);
+			configDynamicPart();
 		}
 		// else if(migrate == NONE)
 	}
@@ -180,10 +178,8 @@ public:
 	void setVoteToHalt(bool value) {
 		groupVoteToHalt = value;
 	}
-	void configDynamicPart(int inSSInterval, int inSoftOrHard) {
+	void configDynamicPart() {
 		dynamicPart = true;
-		ssInterval = inSSInterval;
-		softOrHard = inSoftOrHard;
 	}
 	void recvGraphMutation(int size, char * data) {
 		//cout << "PE" << myRank << " recvGraphMutation()" << std::endl;
@@ -522,7 +518,7 @@ public:
 			}
 		}
 
-		if (((superStepCounter) % ssInterval == 0) && migrationTest) {
+		if (migrationTest) {
 
 			int outMsgScore = dp->partitionMode(&this->peSSResTimeWithDHT,
 					&peCommOutGlobalCnt);
@@ -563,11 +559,7 @@ public:
 				if (myTestNetwork) {
 					dp->findCandidateMessageOutGLDiff(vertexZ,
 							messageDiff, dstNetwork, meanMessage);
-					if (softOrHard == -1) {
-						softMigrate(dstNetwork);
-					} else {
-						hardMigrate(dstNetwork);
-					}
+					hardMigrate(dstNetwork);
 				}
 			} else if (inMsgScore > outMsgScore) {
 				//Migrate InMessages
@@ -593,11 +585,7 @@ public:
 				if (myTestNetwork) {
 					dp->findCandidateMessageInComm(vertexZ,
 							messageDiff, dstNetwork, meanMessage);
-					if (softOrHard == -1) {
-						softMigrate(dstNetwork);
-					} else {
-						hardMigrate(dstNetwork);
-					}
+					hardMigrate(dstNetwork);
 				}
 			} else if (outMsgScore == 0 && outMsgScore == inMsgScore) {
 				if (myRank == 0) {
@@ -626,11 +614,7 @@ public:
 				if (myTestTime) {
 					dp->findCandidatePureExecTime(vertexZ, timeDiff,
 							dstTime, meanMessage);
-					if (softOrHard == -1) {
-						softMigrate(dstTime);
-					} else {
-						hardMigrate(dstTime);
-					}
+					hardMigrate(dstTime);
 				}
 			} else { //add by kuo, mix outgoing and incoming
 				if (myRank == 0) {
@@ -646,7 +630,7 @@ public:
 				double outMeanMessage = (double) cm->getAveOutCommGlobal(); 
 				double inMeanMessage = (double)peCommInTotalCnt[myRank];
 				//kuo
-				long long TotalOutMessage=0, TotalInMessage=0;
+				/*long long TotalOutMessage=0, TotalInMessage=0;
 				for (int i = 0; i < peCommInTotalCnt.size(); i++) {
 					TotalInMessage += peCommInTotalCnt[i];
 					TotalOutMessage += peCommOutGlobalCnt[i];
@@ -654,26 +638,22 @@ public:
 				double inMsgPropotion = (double) peCommInTotalCnt[myRank] / TotalInMessage;
 				double outMsgPropotion = (double)peCommOutGlobalCnt[myRank] / TotalOutMessage;
 				double outMsgPer = inMsgPropotion + outMsgPropotion;
-				outMsgPer = outMsgPropotion / outMsgPer;
+				outMsgPer = outMsgPropotion / outMsgPer;*/
+				double outMsgPer = 0.5;
 				//kuo 
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 					&ignoreSet, average);
 
-				bool myTestTime = dp->multiGrubbsTestLong(outMsgDiff,
+				bool myTestMix = dp->multiGrubbsTestLong(outMsgDiff,
 					inMsgDiff, &peCommOutGlobalCnt,
 					&peCommInTotalCnt, dstTime, globalZ, outMsgPer);
 
 
-				if (myTestTime) {
+				if (myTestMix) {
 					dp->findCandidateMix(vertexZ,
 						outMsgDiff, inMsgDiff, dstTime, outMeanMessage, inMeanMessage, outMsgPer);
-					if (softOrHard == -1) {
-						softMigrate(dstTime);
-					}
-					else {
-						hardMigrate(dstTime);
-					}
+					hardMigrate(dstTime);
 				}
 			}
 
@@ -723,11 +703,7 @@ public:
 				int byteSize = 0;
 				int dst = dm->getSoftDynamicVertexSendDst(kkk->getVertexID());
 				char * vertex;
-				if (softOrHard == -1) {
-					vertex = kkk->byteEncodeCompact(byteSize);
-				} else {
-					vertex = kkk->byteEncode(byteSize, false);
-				}
+				vertex = kkk->byteEncode(byteSize, false);
 				mCharArray verData(byteSize, vertex);
 
 				dataPtr.sc->sendSysMessageValue(VertexMigrate, verData,
@@ -768,13 +744,7 @@ public:
 		 << std::endl;*/
 		mObject<K, V1, M> * newVertex = new mObject<K, V1, M>();
 
-		if (softOrHard == -1) {
-			newVertex->byteDecodeCompact(size, data);
-		} else {
-
-			newVertex->byteDecode(size, data);
-
-		}
+		newVertex->byteDecode(size, data);
 
 		K vertex = newVertex->getVertexID();
 

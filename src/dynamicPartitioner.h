@@ -49,7 +49,16 @@ public:
 		timeStdv = sqrt(timeStdv);
 		//kuo �зǮt end
 
-		double zTime = 0;
+		//kuo (Coefficient of Varirance) * 100%
+
+		double zTime;
+		zTime = (timeStdv / timeAve) * 100;
+
+		if (zTime > 7) { // 7 is imblanceZ
+			return true;
+		}
+		return false;
+		/*double zTime = 0;
 		for (int i = 0; i < timeMap->size(); i++) {
 			zTime = abs(
 					(double) (((double) timeMap->at(i)) - maxTime)//timeAve)
@@ -58,7 +67,7 @@ public:
 				return true;
 			}
 		}
-		return false;
+		return false;*/
 	}
 	int partitionMode(std::map<int, long long> * timeMap,
 			std::map<int, long long> * networkMap) {

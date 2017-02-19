@@ -61,7 +61,7 @@ public:
 				boost::program_options::value<int>(&fileSystem),
 				"Input File system:\n\t 1)HDFS (default),\n\t 2)Local disk")(
 				"partition,p", boost::program_options::value<int>(),
-				"Partitioning Type:\n\t 1)Hash (default),\n\t 2)range")(
+				"Partitioning Type:\n\t 1)Hash ,\n\t 2)range(default)")(
 				"user,u", boost::program_options::value<string>(),
 				"Linux user name, required in case of\n using option (-fs 1)")(
 				"migration,m", boost::program_options::value<int>(),
@@ -86,7 +86,7 @@ public:
 				args.graphName.append(vm["graph"].as<std::string>());
 			}
 			if (vm.count("partition")) {
-        partition = vm["partition"].as<int>();
+				partition = vm["partition"].as<int>();
 				if (partition == 1) {
 					args.partition = hashed;
 				} else if (partition == 2) {
@@ -94,7 +94,7 @@ public:
 				}
 			}
 			if (vm.count("fs")) {
-        fileSystem = vm["fs"].as<int>();
+				fileSystem = vm["fs"].as<int>();
 				if (fileSystem == 1) {
 					args.fs = HDFS;
 				} else if (fileSystem == 2) {
@@ -102,7 +102,7 @@ public:
 				}
 			}
 			if (vm.count("migration")) {
-        migration = vm["migration"].as<int>();
+				migration = vm["migration"].as<int>();
 				if (migration == 1) {
 					args.migration = MixMigration;
 				} else if (migration == 2) {
