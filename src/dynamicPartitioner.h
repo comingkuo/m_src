@@ -53,6 +53,8 @@ public:
 
 		double zTime;
 		zTime = (timeStdv / timeAve) * 100;
+//		for(int i=0;i<timeMap->size(); i++)
+//			cout << "kuo line56 dynamicPartitioner.h RANKi=" << i << "  time:" << timeMap->at(i) << endl;
 
 		if (zTime > 7) { // 7 is imblanceZ
 			return true;
@@ -148,45 +150,32 @@ public:
 		}//kuo 尚未考慮負相關
 	}
 
-	int findPEPairLong(std::map<int, long long> * sample,
+	int findPEPairLong(std::map<int, long long> * sample,//kuo-20170312
 			std::set<int> * ignoreList, double average) {
-		vector<long long> times;
-		//cout << "sample->size() = " << sample->size() << std::endl;
+		
+		vector<pair<int, long long>> timeRankPair;
+		for (int i = 0; i < sample->size(); i++)
+			timeRankPair.push_back(make_pair(i, sample->at(i)));// 將rank及migrate objective的配對放入
 
-		for (int i = 0; i < sample->size(); i++) {
-
-			if (sample->at(i) < average
-					&& ignoreList->find(i) == ignoreList->end()) {
-				times.push_back(sample->at(i));
-			}
-		}
-
-		if(times.size()==0){
+		if (timeRankPair.size() == 0)
 			return myRank;
-		}
-		sort(times.begin(), times.end());
 
-		int myTime = sample->at(myRank);
-		int timePos = myRank;
-		int error = 0;
-		for (int i = 0; i < sample->size(); i++) {
-			if (times[i] == myTime) {
-				timePos = ((sample->size() - 1) - i);
-				//cout << "PE" << myRank << " got timePos = " << timePos << std::endl;
-				break;
-			}
-		}
-		int pairPos = myRank;
-		int myTime2 = times[timePos];
-		for (int i = 0; i < sample->size(); i++) {
-			if (sample->at(i) == myTime2) {
-				pairPos = i;
-				//cout << "PE" << myRank << " got pairPos = " << pairPos << std::endl;
-				break;
-			}
+		sort(timeRankPair.begin(), timeRankPair.end(), //對migrate objective 排序
+			boost::bind(&std::pair<int, long long>::second, _1) <
+			boost::bind(&std::pair<int, long long>::second, _2));
+
+		int myPairPos = myRank;
+		for (int i = 0; i < timeRankPair.size(); i++) {
+			if (timeRankPair[i].first == myRank)
+				myPairPos = timeRankPair[
+					(timeRankPair.size() - 1) - i].first; //找出overloading 與 underloading配對
 		}
 
-		return pairPos;
+		if (ignoreList->find(myPairPos) == ignoreList->end())
+			return myPairPos;
+		else //如果要搬遷的目標woker已經塞不下點,就不搬了
+			return myRank;
+
 	}
 	void findCandidatePureExecTime(float vertexZ, double timeDiff, int dst, double mean) {
 		dataManagerPtr->lockDataManager();
