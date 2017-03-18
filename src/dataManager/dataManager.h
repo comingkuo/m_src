@@ -1057,6 +1057,11 @@ public:
 				writer.writeBlock(blockDataPtr, blockData);
 				blockData[0] = 0;
 				blockDataPtr = 0;
+				//add by kuo
+				strcat(blockData, outData.c_str());
+				strcat(blockData, "\n");
+				blockDataPtr = blockDataPtr + strLen;
+				//add by kuo
 			}
 		}
     //add by kuo
