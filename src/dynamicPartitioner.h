@@ -9,17 +9,56 @@
 #define DYNAMICPARTITIONER_H_
 
 #include <vector>
+#include<queue>
 #include "dataManager/dataManager.h"
 #include "computation/computeManager.h"
 
 template<class K, class V1, class M, class A> class computeManager;
 template<class K, class V1, class M, class A> class dataManager;
 template<class K, class V1, class M, class A>
+
+
+
+
 class dynamicPartitioner {
 	dataManager<K, V1, M, A> * dataManagerPtr;
 	computeManager<K, V1, M, A> * computeManagerPtr;
 	int myRank;
 	double imbalanceZ;
+
+	//kuo 20170316
+	struct heap_cmp_time {//need to fix!!!!
+		bool operator() (mObject<K, V1, M>* a, mObject<K, V1, M>* b) {
+			if (a->getSSResTime() > b->getSSResTime())
+				return a > b;
+			return b > a;
+		}
+	};
+
+	struct heap_cmp_comm {
+		bool operator() (mObject<K, V1, M>* a, mObject<K, V1, M>* b) {
+			if (a->getInTotal() > b->getInTotal())
+				return a > b;
+			return b > a;
+		}
+	};
+
+	struct heap_cmp_commOut {
+		bool operator() (mObject<K, V1, M>* a, mObject<K, V1, M>* b) {
+			if (a->getOutGlobal() > b->getOutGlobal())
+				return a > b;
+			return b > a;
+		}
+	};
+
+	struct heap_cmp_mix {
+		bool operator() (mObject<K, V1, M>* a, mObject<K, V1, M>* b) {
+			if ((a->getOutGlobal() + a->getInTotal()) > (b->getOutGlobal() + b->getInTotal()))
+				return a > b;
+			return b > a;
+		}
+	};
+	//kuo 20170316
 public:
 	dynamicPartitioner(dataManager<K, V1, M, A> * inDataManagerPtr,
 			computeManager<K, V1, M, A> * inComputeManagerPtr, int inMyRank, double inZ) :
@@ -27,7 +66,7 @@ public:
 					inComputeManagerPtr), myRank(inMyRank) {
 		imbalanceZ = inZ;
 	}
-	bool testForImbalance(std::map<int, long long> * timeMap, double &average) {
+	bool testForImbalance(std::map<int, long long> * timeMap, double &average, int thresholdB) {
 		double timeAve = 0;
 		long long maxTime = 0;
 		for (int i = 0; i < timeMap->size(); i++) {
@@ -56,7 +95,7 @@ public:
 //		for(int i=0;i<timeMap->size(); i++)
 //			cout << "kuo line56 dynamicPartitioner.h RANKi=" << i << "  time:" << timeMap->at(i) << endl;
 
-		if (zTime > 7) { // 7 is imblanceZ
+		if (zTime > thresholdB) { // 7 is imblanceZ
 			return true;
 		}
 		return false;
@@ -139,19 +178,18 @@ public:
 			cout << "kuo --- negative correlation!!!\\n";
 
 		correlation = sigmaXY/(sigmaX*sigmaY);
+		cout << "my rank:" << myRank << " , inNout correlation value:" << correlation << endl;
 		if (correlation >= 0.7) { // strong linear relationship
-			return 3;
-		} else if (correlation >= 0.5) {//moderate relationship
 			return 2;
-		} else if (correlation >=0.3) {
+		} else if (correlation >= 0.5 && correlation >0.7) {//weak relationship
 			return 1;
 		} else {
-		return 0;
-		}//kuo 尚未考慮負相關
+			return 0;
+		}
 	}
 
 	int findPEPairLong(std::map<int, long long> * sample,//kuo-20170312
-			std::set<int> * ignoreList, double average) {
+			std::set<int> * ignoreList, double average, std::map<int, long long> * timeCompare) {
 		
 		vector<pair<int, long long>> timeRankPair;
 		for (int i = 0; i < sample->size(); i++)
@@ -171,74 +209,48 @@ public:
 					(timeRankPair.size() - 1) - i].first; //找出overloading 與 underloading配對
 		}
 
-		if (ignoreList->find(myPairPos) == ignoreList->end())
-			return myPairPos;
-		else //如果要搬遷的目標woker已經塞不下點,就不搬了
-			return myRank;
+		if (ignoreList->find(myPairPos) == ignoreList->end()) {
+			long long temp;
+			temp = abs(timeCompare->at(myRank) - timeCompare->at(myPairPos));
+			if(temp > 1)
+				return myPairPos;
+		}
+		return myRank;
 
 	}
 	void findCandidatePureExecTime(float vertexZ, double timeDiff, int dst, double mean) {
 		dataManagerPtr->lockDataManager();
-		double stdv = 0;
-		double tmp;
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			tmp = pow(mean - tmpObj->getSSResTime(), 2);
-			//cout << " tmpObj->getSSResTime() = " << tmpObj->getSSResTime() << std::endl;
-			stdv = stdv + tmp;
-		}
-		stdv = stdv / ((double)(dataManagerPtr->vertexSetSize()));
-		stdv = sqrt(stdv);
-		double reqZ = vertexZ;
-		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << " mean " << mean << std::endl;
-		double vz;
+
 		double sumTime = 0;
 		int countNodes = 0;
 		double comm = 0;
 
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted()) {
-				vz = (tmpObj->getSSResTime() - mean) / stdv;
-				//cout << "PE " << myRank << " vz = " << vz << std::endl;
-				/*comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
-				- ((double) tmpObj->getMessageCountLocal());*/
-				//cout << " comm = " << comm << endl;
-				if (reqZ < vz && (!tmpObj->isHalted())
-					&& (timeDiff - sumTime - tmpObj->getSSResTime())
-				>(-1)) {
-					countNodes++;
-					sumTime = sumTime + tmpObj->getSSResTime();
-					//sumInMsg = sumInMsg + tmpObj->getInGlobal();
-					dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
-					dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
-						dst);
-				}
-				else {
-					dataManagerPtr->getVertexObjByPos(i)->resetMigrationMark();
-				}
-			}
-			if (sumTime > timeDiff) {
-				break;
-			}
-		}
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()
-				&& tmpObj->getSSResTime() > 0
-				&& (timeDiff - sumTime - tmpObj->getSSResTime()) > (-1)) {
 
+		//kuo 20170316
+		vector<mObject<K, V1, M>*> vertices;
+		mObject<K, V1, M> * tmpObj;
+		priority_queue<mObject<K, V1, M>*, vector<mObject<K, V1, M>*>, heap_cmp_time> verticeSorted;
+		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
+			tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			if (!tmpObj->isHalted())
+				verticeSorted.push(tmpObj);
+		}
+			
+		while (!verticeSorted.empty())
+		{
+			tmpObj = verticeSorted.top();
+			if ((timeDiff - sumTime - tmpObj->getSSResTime()) > -1) {
 				countNodes++;
 				sumTime = sumTime + tmpObj->getSSResTime();
-
-				dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
-				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			}
-
-			if (sumTime > timeDiff) {
+				tmpObj->setMigrationMark();
+				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,dst);
+			} if (sumTime > timeDiff) {
 				break;
 			}
+			
+			verticeSorted.pop();
 		}
+		//kuo 20170316
 
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
 			<< " nodes with TD = " << (timeDiff - sumTime) 
@@ -249,83 +261,39 @@ public:
 	void findCandidateMix(float vertexZ,
 			long long outDiff, long long inDiff, int dst, double outMean, double inMean, double outMsgPer) {
 		dataManagerPtr->lockDataManager();
-		//kuo
-		//double outMsgPer = 0.5;
-		double outStdv = 0;
-		double inStdv = 0;
-		//kuo
-		double tmp;
 
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			tmp = pow(outMean - tmpObj->getOutGlobal(), 2); 
-			outStdv = outStdv + tmp;
-			tmp = pow(inMean - tmpObj->getInTotal(), 2); 
-			inStdv = inStdv + tmp;
-			//cout << " tmpObj->getSSResTime() = " << tmpObj->getSSResTime() << std::endl;
-		}
-		inStdv = inStdv / ((double)(dataManagerPtr->vertexSetSize()));
-		inStdv = sqrt(inStdv);
-		outStdv = outStdv / ((double)(dataManagerPtr->vertexSetSize()));
-		outStdv = sqrt(outStdv);
-		double reqZ = vertexZ;
-		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << " mean " << mean << std::endl;
-		double vz;
-		//kuo
-		double outVz, inVz;
-		//kuo
-
-
+		//kuo 20170316
+		std::cout << "outDiff = " << outDiff << ", inDiff = " << inDiff << std::endl;
 		long long sumOutMsg = 0;
 		long long sumInMsg = 0;
 		int countNodes = 0;
-		double comm = 0;
+		vector<mObject<K, V1, M>*> vertices;
+		mObject<K, V1, M> * tmpObj;
+		priority_queue<mObject<K, V1, M>*, vector<mObject<K, V1, M>*>, heap_cmp_mix> verticeSorted;
 		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted()) {
-				outVz = (tmpObj->getOutGlobal() - outMean) / outStdv;
-				inVz = (tmpObj->getInTotal() - inMean) / inStdv;
-
-				vz = (outVz * outMsgPer) + (inVz * (1 - outMsgPer));
-				//cout << "PE " << myRank << " Mixvz = " << vz << std::endl;
-				/*comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
-				 - ((double) tmpObj->getMessageCountLocal());*/
-				//cout << " comm = " << comm << endl;
-				if (reqZ < vz && (!tmpObj->isHalted()) &&
-					((inDiff - sumInMsg - tmpObj->getInTotal()) >(-1) || (outDiff - sumOutMsg - tmpObj->getOutGlobal()) > (-1))) {
-					countNodes++;
-					sumOutMsg = sumOutMsg + tmpObj->getOutGlobal();
-					sumInMsg = sumInMsg + tmpObj->getInTotal();
-					//sumInMsg = sumInMsg + tmpObj->getInGlobal();
-					dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
-					dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
-							dst);
-				} else {
-					dataManagerPtr->getVertexObjByPos(i)->resetMigrationMark();
-				}
-			}
-			if (sumOutMsg > outDiff || sumInMsg > inDiff) {
-				break;
-			}
+			tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			if (!tmpObj->isHalted())
+				verticeSorted.push(tmpObj);
 		}
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()
-					&& (tmpObj->getInTotal() > 0 || tmpObj->getOutGlobal() > 0)
-				    && ((inDiff - sumInMsg - tmpObj->getInTotal()) >(-1) || (outDiff - sumOutMsg - tmpObj->getOutGlobal()) > (-1))) {
 
+		while (!verticeSorted.empty())
+		{
+			tmpObj = verticeSorted.top();
+			if ((inDiff - sumInMsg - tmpObj->getInTotal()) >(-1) || (outDiff - sumOutMsg - tmpObj->getOutGlobal()) > (-1)) {
 				countNodes++;
 				sumOutMsg = sumOutMsg + tmpObj->getOutGlobal();
 				sumInMsg = sumInMsg + tmpObj->getInTotal();
 				//sumInMsg = sumInMsg + tmpObj->getInGlobal();
-				dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
-				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			}
-
-			if (sumOutMsg > outDiff || sumInMsg > inDiff) {
+				tmpObj->setMigrationMark();
+				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
+					dst);
+			} if (sumOutMsg > outDiff || sumInMsg > inDiff) {
 				break;
 			}
-		}
+			verticeSorted.pop();
+		} 
+		//kuo 20170316
+
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
 				<< " nodes with TD(out + in) = "
 				<< (outDiff - sumOutMsg) << "+" << (inDiff - sumInMsg) << " to "
@@ -336,65 +304,34 @@ public:
 			int dst, float mean) {
 		dataManagerPtr->lockDataManager();
 
-		float stdv = 0;
-		float tmp;
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			tmp = pow(mean - tmpObj->getInTotal(), 2);
-			//tmp = pow(mean - tmpObj->getInGlobal(), 2);
-			stdv = stdv + tmp;
-		}
-		stdv = stdv / ((float) (dataManagerPtr->vertexSetSize()));
-		stdv = sqrt(stdv);
-		float reqZ = vertexZ;
-		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << std::endl;
-		float vz;
 		long long sumComm = 0;
 		int countNodes = 0;
 		double comm = 0;
+		//kuo 20170316
+		vector<mObject<K, V1, M>*> vertices;
+		mObject<K, V1, M> * tmpObj;
+		priority_queue<mObject<K, V1, M>*, vector<mObject<K, V1, M>*>, heap_cmp_comm> verticeSorted;
 		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted()) {
-				vz = (tmpObj->getInTotal() - mean) / stdv;
-				//vz = (tmpObj->getInGlobal() - mean) / stdv;
-				//cout << "PE " << myRank << " vz = " << vz << std::endl;
-				/*	comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
-				 - ((double) tmpObj->getMessageCountLocal());*/
-				//cout << " comm = " << comm << endl;
-				if (reqZ < vz && (!tmpObj->isHalted())
-						&& (diff - sumComm - tmpObj->getInTotal()) > (-1)) {
-					countNodes++;
-					sumComm = sumComm + tmpObj->getInTotal();
-					//sumComm = sumComm + tmpObj->getInGlobal();
-					dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
-					dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
-							dst);
-				} else {
-					dataManagerPtr->getVertexObjByPos(i)->resetMigrationMark();
-				}
-			}
-			if (sumComm > diff) {
-				break;
-			}
+			tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			if (!tmpObj->isHalted())
+				verticeSorted.push(tmpObj);
 		}
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()
-					&& tmpObj->getInTotal() > 0
-					//&& tmpObj->getInGlobal() > 0
-					&& (diff - sumComm - tmpObj->getInTotal()) > (-1)) {
 
+		while (!verticeSorted.empty())
+		{
+			tmpObj = verticeSorted.top();
+			if ((diff - sumComm - tmpObj->getInTotal()) > -1) {
 				countNodes++;
 				sumComm = sumComm + tmpObj->getInTotal();
-				//sumComm = sumComm + tmpObj->getInGlobal();
-				dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
+				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			}
-
-			if (sumComm > diff) {
+			} if (sumComm > diff) {
 				break;
 			}
+			verticeSorted.pop();
 		}
+		//kuo 20170316
+
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
 				<< " nodes with TD = " << (diff - sumComm) << " to " << dst
 				<< " original diff = " << diff << std::endl;
@@ -405,61 +342,34 @@ public:
 			long long diff, int dst, float mean) {
 		dataManagerPtr->lockDataManager();
 
-		float stdv = 0;
-		float tmp;
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			//tmp = pow(mean - tmpObj->getOutDiff(), 2);
-			tmp = pow(mean - tmpObj->getOutGlobal(), 2);
-			stdv = stdv + tmp;
-		}
-		stdv = stdv / ((float) (dataManagerPtr->vertexSetSize()));
-		stdv = sqrt(stdv);
-		float reqZ = vertexZ;
-		//cout << "PE " << myRank << " reqZ = " << reqZ << " stdv = " << stdv << std::endl;
-		float vz;
 		long long sumComm = 0;
 		int countNodes = 0;
 		double comm = 0;
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted()) {
-				vz = (tmpObj->getOutGlobal() - mean) / stdv;
-				//cout << "PE " << myRank << " vz = " << vz << std::endl;
-				/*	comm = 0.75 * ((double) tmpObj->getMessageCountGlobal())
-				 - ((double) tmpObj->getMessageCountLocal());*/
-				//cout << " comm = " << comm << endl;
-				if (reqZ < vz && (!tmpObj->isHalted())
-						&& (diff - sumComm - tmpObj->getOutGlobal()) > (-1)) {
-					countNodes++;
-					sumComm = sumComm + tmpObj->getOutGlobal();
-					dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
-					dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
-							dst);
-				} else {
-					dataManagerPtr->getVertexObjByPos(i)->resetMigrationMark();
-				}
-			}
-			if (sumComm > diff) {
-				break;
-			}
-		}
-		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
-			mObject<K, V1, M> * tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted() && !tmpObj->isMigrationMarked()
-					&& tmpObj->getOutGlobal() > 0
-					&& (diff - sumComm - tmpObj->getOutGlobal()) > (-1)) {
 
+		//kuo 20170316
+		vector<mObject<K, V1, M>*> vertices;
+		mObject<K, V1, M> * tmpObj;
+		priority_queue<mObject<K, V1, M>*, vector<mObject<K, V1, M>*>, heap_cmp_commOut> verticeSorted;
+		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
+			tmpObj = dataManagerPtr->getVertexObjByPos(i);
+			if (!tmpObj->isHalted())
+				verticeSorted.push(tmpObj);
+		}
+
+		while (!verticeSorted.empty())
+		{
+			tmpObj = verticeSorted.top();
+			if ((diff - sumComm - tmpObj->getOutGlobal()) > -1) {
 				countNodes++;
 				sumComm = sumComm + tmpObj->getOutGlobal();
-				dataManagerPtr->getVertexObjByPos(i)->setMigrationMark();
+				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			}
-
-			if (sumComm > diff) {
+			} if (sumComm > diff) {
 				break;
 			}
+			verticeSorted.pop();
 		}
+		//kuo 20170316
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
 				<< " nodes with TD = " << (diff - sumComm) << " to " << dst
 				<< " original diff = " << diff << std::endl;

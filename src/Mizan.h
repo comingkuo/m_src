@@ -122,12 +122,14 @@ private:
 
 	char ** inputPaths;
 	int pathSize;
+	int thresholdBB;
 
 public:
 
 	Mizan(communicationType commType, IsuperStep<K, V1, M, A> * inST,
 			int inStorageType, char ** inputPaths, int pathSize, fileSystem fs,
-			migrationMode migrate) {
+			migrationMode migrate, int thresholdB) {
+		thresholdBB = thresholdB;
 		superStepCounter = 0;
 		userST = inST;
 		commMang.setCommType(commType);
@@ -504,7 +506,7 @@ public:
 
 		double average = 0;
 		bool migrationTest = dp->testForImbalance(&this->peSSResTimeWithDHT,
-				average);
+				average, thresholdBB);
 		if (myRank == 0) {
 			cout << "PE" << myRank << "Migration test = " << migrationTest
 					<< std::endl;
@@ -541,7 +543,7 @@ public:
 				float meanMessage = cm->getAveOutCommGlobal();
 
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
-						&ignoreSet, average);
+						&ignoreSet, average, &peSSResTimeWithDHT);
 				//kuo testing out msg size start
 				//for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
 				//	cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
@@ -575,7 +577,7 @@ public:
 				//int dstNetwork = dp->findPEPairLong(&peCommInGlobalCnt);
 				//kuo找配對
 				int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt,
-						&ignoreSet, average);
+						&ignoreSet, average, &peSSResTimeWithDHT);
 				//kuo testing in msg size end
 				//kuo算跟配對的差額
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
@@ -597,7 +599,7 @@ public:
 				double meanMessage = cm->getVerAveResTime();
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
-						&ignoreSet, average);
+						&ignoreSet, average, &peSSResTimeWithDHT);
 				//kuo testing exec time start
 				//for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
 				//	cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
@@ -643,7 +645,7 @@ public:
 				//kuo 
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
-					&ignoreSet, average);
+					&ignoreSet, average, &peSSResTimeWithDHT);
 
 				bool myTestMix = dp->multiGrubbsTestLong(outMsgDiff,
 					inMsgDiff, &peCommOutGlobalCnt,

@@ -37,6 +37,7 @@ struct MizanArgs {
 	migrationMode migration;
 	communicationType communication;
 	int superSteps;
+	int threshold;
 };
 
 #endif /* GENERALMIZAN_H_ */

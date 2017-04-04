@@ -40,6 +40,7 @@ public:
 		args.migration = MixMigration;
 		args.communication = _pt2ptb;
 		args.superSteps = 20;
+		args.threshold = 15;
 
 		int partition = -1;
 		int fileSystem = -1;
@@ -52,7 +53,7 @@ public:
 
 		desc.add_options()("help,h", "Print help messages")("algorithm,a",
 				boost::program_options::value<int>(&args.algorithm),
-				"Algorithm ID:\n\t 1)PageRank (default),\n\t 2)TopK PageRank,\n\t 3)Diameter Estimation,\n\t 4)Ad Simulation")(
+				"Algorithm ID:\n\t 1)PageRank (default),\n\t 2)TopK PageRank,\n\t 3)Diameter Estimation,\n\t 4)Single Source Shortest Path")(
 				"supersteps,s", boost::program_options::value<int>(&args.superSteps),
 				"Linux user name, required in case of\n using option (-fs 1)")(
 				"workers,w", boost::program_options::value<int>(&args.clusterSize)->required(),
@@ -61,11 +62,13 @@ public:
 				boost::program_options::value<int>(&fileSystem),
 				"Input File system:\n\t 1)HDFS (default),\n\t 2)Local disk")(
 				"partition,p", boost::program_options::value<int>(),
-				"Partitioning Type:\n\t 1)Hash ,\n\t 2)range(default)")(
+				"Partitioning Type:\n\t 1)Hash ,\n\t 2)range(default),\n\t 3)Metis(minCuts)")(
 				"user,u", boost::program_options::value<string>(),
 				"Linux user name, required in case of\n using option (-fs 1)")(
 				"migration,m", boost::program_options::value<int>(),
-				"Dynamic load balancing type:\n\t 1)Migration (default),\n\t 2)none,\n\t");
+				"Dynamic load balancing type:\n\t 1)Migration (default),\n\t 2)none,\n\t")(
+				"threshold,t", boost::program_options::value<int>(),
+				"Migration test threshold \n\t");
 
 		boost::program_options::variables_map vm;
 		try {
@@ -91,6 +94,8 @@ public:
 					args.partition = hashed;
 				} else if (partition == 2) {
 					args.partition = range;
+				} else if (partition == 3) {
+					args.partition = minCuts;
 				}
 			}
 			if (vm.count("fs")) {
@@ -108,6 +113,9 @@ public:
 				} else if (migration == 2) {
 					args.migration = NONE;
 				}
+			}
+			if (vm.count("threshold")) {
+				args.threshold = vm["threshold"].as<int>();
 			}
 			if (args.fs == HDFS && args.hdfsUserName.length() == 0) {
 				std::cerr

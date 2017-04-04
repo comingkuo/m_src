@@ -23,6 +23,8 @@
 #include "tools/argParser.h"
 #include "algorithms/maxAggregator.h"
 #include "general.h"
+#include "algorithms/SSSP.h"
+#include "algorithms/ConnectedComponent.h"
 
 using namespace std;
 
@@ -52,7 +54,7 @@ int main(int argc, char** argv) {
 
 		Mizan<mLong, mDouble, mDouble, mLong> * mmk = new Mizan<mLong, mDouble,
 				mDouble, mLong>(myArgs.communication, &us, storageType,
-				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration);
+				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
 
 		mmk->registerMessageCombiner(&prc);
 
@@ -84,7 +86,7 @@ int main(int argc, char** argv) {
 		Mizan<mLong, mDoubleArray, mDouble, mLong> * mmk = new Mizan<mLong,
 				mDoubleArray, mDouble, mLong>(myArgs.communication, &prt,
 				storageType, inputBaseFile, myArgs.clusterSize, myArgs.fs,
-				myArgs.migration);
+				myArgs.migration, myArgs.threshold);
 		mmk->setVoteToHalt(groupVoteToHalt);
 
 		mmk->run(argc, argv);
@@ -99,7 +101,7 @@ int main(int argc, char** argv) {
 		Mizan<mLong, mLongArray, mLongArray, mLong> * mmk = new Mizan<mLong,
 				mLongArray, mLongArray, mLong>(myArgs.communication, &dE,
 				storageType, inputBaseFile, myArgs.clusterSize, myArgs.fs,
-				myArgs.migration);
+				myArgs.migration, myArgs.threshold);
 		mmk->setVoteToHalt(groupVoteToHalt);
 
 		mmk->run(argc, argv);
@@ -107,18 +109,52 @@ int main(int argc, char** argv) {
 		delete mmk;
 
 	} else if (myArgs.algorithm == 4) {
-		groupVoteToHalt = false;
-		storageType = InOutNbrStore;
-		AdSim alg(myArgs.superSteps);
+		groupVoteToHalt = true;
+		storageType = OutNbrStore;
+		SSSP sp(1,myArgs.superSteps);
+		SSSPCombiner spc;
 
-		Mizan<mLong, mLong, mLongArray, mLong> * mmk = new Mizan<mLong, mLong,
-				mLongArray, mLong>(myArgs.communication, &alg, storageType,
-				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration);
+
+		Mizan<mLong, mLong, mLong, mLong> * mmk = new Mizan<mLong, mLong,
+				mLong, mLong>(myArgs.communication, &sp, storageType,
+				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
+
+		mmk->registerMessageCombiner(&spc);
+
 		mmk->setVoteToHalt(groupVoteToHalt);
+
+		string output;
+		output.append("/user/");
+		output.append(myArgs.hdfsUserName.c_str());
+		output.append("/m_run_output/");
+		output.append(myArgs.graphName.c_str());
+		mmk->setOutputPath(output.c_str());
 
 		mmk->run(argc, argv);
 		myWorkerID = mmk->getPEID();
 		delete mmk;
+	}
+	else if (myArgs.algorithm == 5) {
+		groupVoteToHalt = true;
+		storageType = OutNbrStore;
+		ConnectedComponent CC(myArgs.superSteps);
+
+		Mizan<mLong, mLong, mLong, mLong> * mmk = new Mizan<mLong, mLong,
+			mLong, mLong>(myArgs.communication, &CC, storageType,
+				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
+
+		string output;
+		output.append("/user/");
+		output.append(myArgs.hdfsUserName.c_str());
+		output.append("/m_run_output/");
+		output.append(myArgs.graphName.c_str());
+		mmk->setOutputPath(output.c_str());
+
+		mmk->setVoteToHalt(groupVoteToHalt);
+		mmk->run(argc, argv);
+		myWorkerID = mmk->getPEID();
+		delete mmk;
+
 	}
 
 #ifdef Verbose
