@@ -71,9 +71,9 @@ public:
 				comm->sendMessage(data->getOutEdgeID(i), outVal);
 			}
 		}else data->voteToHalt();
-		if ((abs(currVal - newVal) < error && data->getCurrentSS() > 1)){
+		/*if ((abs(currVal - newVal) < error && data->getCurrentSS() > 1)){
 			data->voteToHalt();
-		}
+		}*/
 	}
 };
 #endif /* PAGERANK_H_ */

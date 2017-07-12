@@ -157,16 +157,18 @@ public:
 			tmp = pow(networkAve - networkVec[i], 2);
 			networkStdv = networkStdv + tmp;
 		}
-		timeStdv = timeStdv / ((float) (timeVec.size()));
+		timeStdv = timeStdv / ((double) (timeVec.size()));
 		timeStdv = sqrt(timeStdv);
 
-		networkStdv = networkStdv / ((float) (networkVec.size()));
+		networkStdv = networkStdv / ((double) (networkVec.size()));
 		networkStdv = sqrt(networkStdv);
 
 		//kuo testing correlation
 		double sigmaXY=0, sigmaX=0, sigmaY=0, correlation=0;
-		for(int i=0;i< timeVec.size();i++) 
-			sigmaXY += ((timeVec[i] - timeAve) * (networkVec[i] - networkAve));
+		for (int i = 0; i < timeVec.size(); i++) {
+			tmp = (timeMap->at(i) - timeAve) * (networkMap->at(i) - networkAve);
+			sigmaXY += tmp;
+		}
 		for(int i=0;i<timeVec.size();i++)
 			sigmaX += pow(timeVec[i] - timeAve, 2);
 		sigmaX = sqrt(sigmaX);
@@ -178,19 +180,21 @@ public:
 			cout << "kuo --- negative correlation!!!\\n";
 
 		correlation = sigmaXY/(sigmaX*sigmaY);
-		cout << "my rank:" << myRank << " , inNout correlation value:" << correlation << endl;
-		if (correlation >= 0.7) { // strong linear relationship
-			return 2;
-		} else if (correlation >= 0.5 && correlation >0.7) {//weak relationship
-			return 1;
-		} else {
-			return 0;
-		}
+		//cout << "my rank:" << myRank << " , inNout correlation value:" << correlation << endl;
+	if (correlation >= 0.7) { // strong linear relationship
+      return 3;
+    } else if (correlation >= 0.5 && correlation <0.7) {//weak relationship
+      return 2;
+    } else if (correlation >= 0.3 && correlation < 0.5) {
+      return 1;
+    } else {
+      return 0;
+    }
 	}
 
 	int findPEPairLong(std::map<int, long long> * sample,//kuo-20170312
 			std::set<int> * ignoreList, double average, std::map<int, long long> * timeCompare) {
-		
+		int tmp;
 		vector<pair<int, long long>> timeRankPair;
 		for (int i = 0; i < sample->size(); i++)
 			timeRankPair.push_back(make_pair(i, sample->at(i)));// 將rank及migrate objective的配對放入
@@ -202,6 +206,23 @@ public:
 			boost::bind(&std::pair<int, long long>::second, _1) <
 			boost::bind(&std::pair<int, long long>::second, _2));
 
+		//20170520 kuo
+		int tmpSize = timeRankPair.size() / 2;
+		int tmp;
+		for (int i = 0 ; i < tmpSize; i++) { //如果objective小的內有ignoreset成員，則去除
+			tmp = timeRankPair[i].first;
+			if (ignoreList->find(tmp) != ignoreList->end()) {
+				timeRankPair.erase(timeRankPair.begin() + i);
+				i--;
+				tmpSize = timeRankPair.size() / 2;
+			}
+		}
+		sort(timeRankPair.begin(), timeRankPair.end(), //針對去除ignore set的再次排序
+			boost::bind(&std::pair<int, long long>::second, _1) <
+			boost::bind(&std::pair<int, long long>::second, _2));
+		//20170520 kuo
+
+
 		int myPairPos = myRank;
 		for (int i = 0; i < timeRankPair.size(); i++) {
 			if (timeRankPair[i].first == myRank)
@@ -210,15 +231,15 @@ public:
 		}
 
 		if (ignoreList->find(myPairPos) == ignoreList->end()) {
-			long long temp;
-			temp = abs(timeCompare->at(myRank) - timeCompare->at(myPairPos));
-			if(temp > 1)
-				return myPairPos;
+			  long long temp;
+			  temp = abs(timeCompare->at(myRank) - timeCompare->at(myPairPos));
+			  if(temp > 1)
+				  return myPairPos;
 		}
 		return myRank;
 
 	}
-	void findCandidatePureExecTime(float vertexZ, double timeDiff, int dst, double mean) {
+	void findCandidatePureExecTime(float vertexZ, double timeDiff, int dst, double mean, int migrateNodes) {
 		dataManagerPtr->lockDataManager();
 
 		double sumTime = 0;
@@ -244,7 +265,7 @@ public:
 				sumTime = sumTime + tmpObj->getSSResTime();
 				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,dst);
-			} if (sumTime > timeDiff) {
+			} if (sumTime > timeDiff || countNodes > migrateNodes) {
 				break;
 			}
 			
@@ -259,7 +280,7 @@ public:
 		dataManagerPtr->unlockDataManager();
 	}
 	void findCandidateMix(float vertexZ,
-			long long outDiff, long long inDiff, int dst, double outMean, double inMean, double outMsgPer) {
+			long long outDiff, long long inDiff, int dst, double outMean, double inMean, double outMsgPer, int migrateNodes) {
 		dataManagerPtr->lockDataManager();
 
 		//kuo 20170316
@@ -272,8 +293,9 @@ public:
 		priority_queue<mObject<K, V1, M>*, vector<mObject<K, V1, M>*>, heap_cmp_mix> verticeSorted;
 		for (int i = 0; i < dataManagerPtr->vertexSetSize(); i++) {
 			tmpObj = dataManagerPtr->getVertexObjByPos(i);
-			if (!tmpObj->isHalted())
+			if (!tmpObj->isHalted()) {
 				verticeSorted.push(tmpObj);
+      }
 		}
 
 		while (!verticeSorted.empty())
@@ -287,7 +309,7 @@ public:
 				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj,
 					dst);
-			} if (sumOutMsg > outDiff || sumInMsg > inDiff) {
+			} if (sumOutMsg > outDiff || sumInMsg > inDiff || countNodes > migrateNodes) {
 				break;
 			}
 			verticeSorted.pop();
@@ -301,7 +323,7 @@ public:
 		dataManagerPtr->unlockDataManager();
 	}
 	void findCandidateMessageInComm(float vertexZ, long long diff,
-			int dst, float mean) {
+			int dst, float mean, int migrateNodes) {
 		dataManagerPtr->lockDataManager();
 
 		long long sumComm = 0;
@@ -325,7 +347,7 @@ public:
 				sumComm = sumComm + tmpObj->getInTotal();
 				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			} if (sumComm > diff) {
+			} if (sumComm > diff || countNodes > migrateNodes) {
 				break;
 			}
 			verticeSorted.pop();
@@ -339,7 +361,7 @@ public:
 		dataManagerPtr->unlockDataManager();
 	}
 	void findCandidateMessageOutGLDiff(float vertexZ,
-			long long diff, int dst, float mean) {
+			long long diff, int dst, float mean, int migrateNodes) {
 		dataManagerPtr->lockDataManager();
 
 		long long sumComm = 0;
@@ -364,7 +386,7 @@ public:
 				sumComm = sumComm + tmpObj->getOutGlobal();
 				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			} if (sumComm > diff) {
+			} if (sumComm > diff || countNodes > migrateNodes) {
 				break;
 			}
 			verticeSorted.pop();

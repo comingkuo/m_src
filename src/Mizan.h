@@ -75,6 +75,9 @@ private:
 	int subGCount;
 	int mySubGCount;
 	int superStepCounter;
+  
+  time_t sss = 0;//kuo time
+  time_t sss2 = 0;
 
 	typedef boost::function<void(void)> fun_t;
 	std::map<SYS_CMDS, fun_t> sysGroupMessageContainer;
@@ -273,6 +276,7 @@ public:
 		}
 
 		if (next && iWantToTerminate) {
+      //cout << "TTTTTTTTTTTT276" << endl;
 			terminateMizan();
 		} else if (next && !iWantToTerminate) {
 
@@ -327,6 +331,7 @@ public:
 		cm->performDataMutations();
 		bool subTerminate = cm->cleanUp(enableVertices);
 		if (subTerminate == true) {
+      //cout << "TTTTTTTTTTTT331" << endl;
 			terminateMizan();
 		} else {
 			mLong * array = new mLong[8];
@@ -505,6 +510,8 @@ public:
 		const clock_t start_Migrate = clock();
 
 		double average = 0;
+		int migrateNodes;
+		int prop = 0.3;
 		bool migrationTest = dp->testForImbalance(&this->peSSResTimeWithDHT,
 				average, thresholdBB);
 		if (myRank == 0) {
@@ -526,7 +533,6 @@ public:
 					&peCommOutGlobalCnt);
 			int inMsgScore = dp->partitionMode(&this->peSSResTimeWithDHT,
 					&this->peCommInTotalCnt);// kuo modified 12/11/16
-
 			if (myRank == 0) {
 				std::cout << "Dynamic outMsgScore = " << outMsgScore
 						<< " Dynamic inMsgScore = " << inMsgScore << std::endl;
@@ -544,6 +550,8 @@ public:
 
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
+
+				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop * 8000;
 				//kuo testing out msg size start
 				//for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
 				//	cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
@@ -560,7 +568,7 @@ public:
         //kuo testing end
 				if (myTestNetwork) {
 					dp->findCandidateMessageOutGLDiff(vertexZ,
-							messageDiff, dstNetwork, meanMessage);
+							messageDiff, dstNetwork, meanMessage, migrateNodes);
 					hardMigrate(dstNetwork);
 				}
 			} else if (inMsgScore > outMsgScore) {
@@ -578,6 +586,7 @@ public:
 				//kuo找配對
 				int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
+				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop * 8000;
 				//kuo testing in msg size end
 				//kuo算跟配對的差額
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
@@ -586,7 +595,7 @@ public:
 
 				if (myTestNetwork) {
 					dp->findCandidateMessageInComm(vertexZ,
-							messageDiff, dstNetwork, meanMessage);
+							messageDiff, dstNetwork, meanMessage, migrateNodes);
 					hardMigrate(dstNetwork);
 				}
 			} else if (outMsgScore == 0 && outMsgScore == inMsgScore) {
@@ -600,6 +609,7 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 						&ignoreSet, average, &peSSResTimeWithDHT);
+				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop * 8000;
 				//kuo testing exec time start
 				//for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
 				//	cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
@@ -615,7 +625,7 @@ public:
 
 				if (myTestTime) {
 					dp->findCandidatePureExecTime(vertexZ, timeDiff,
-							dstTime, meanMessage);
+							dstTime, meanMessage, migrateNodes);
 					hardMigrate(dstTime);
 				}
 			} else { //add by kuo, mix outgoing and incoming
@@ -646,6 +656,7 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 					&ignoreSet, average, &peSSResTimeWithDHT);
+				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop * 8000;
 
 				bool myTestMix = dp->multiGrubbsTestLong(outMsgDiff,
 					inMsgDiff, &peCommOutGlobalCnt,
@@ -654,7 +665,7 @@ public:
 
 				if (myTestMix) {
 					dp->findCandidateMix(vertexZ,
-						outMsgDiff, inMsgDiff, dstTime, outMeanMessage, inMeanMessage, outMsgPer);
+						outMsgDiff, inMsgDiff, dstTime, outMeanMessage, inMeanMessage, outMsgPer, migrateNodes);
 					hardMigrate(dstTime);
 				}
 			}
@@ -959,6 +970,7 @@ public:
 		if (myRank == 0) {
 			cout << "!!!Hello World -- I am Mizan, nice meeting you XD !!!"
 					<< endl;
+      sss2 = time(NULL);
 		}
 
 		/*cout << myRank << " subGraphContainer[myRank] = "
@@ -1006,11 +1018,21 @@ public:
 	void runSingleSuperStep() {
 		//cout << "PE" << myRank << " runSingleSuperStep " << std::endl;
 		//superStep
+    float syzz = 0.0;
+    if(superStepCounter %2 ==0 ) {
+      sss2 = time(NULL);
+      syzz = ((float) (sss2 - sss));
+    } else {
+      sss = time(NULL);
+      syzz = ((float) (sss - sss2));
+    }
+
 		if (myRank == 0) {
 			std::cout << " ---------- Starting Superstep " << superStepCounter
-					<< " ----------" << endl;
+					<< " ----------Time:" << syzz << endl;
 			cout.flush();
 		}
+
 		(tm.tp).schedule(
 				boost::bind(&computeManager<K, V1, M, A>::superStep, cm));
 		//superStepCounter++;

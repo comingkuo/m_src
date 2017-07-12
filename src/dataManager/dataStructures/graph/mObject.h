@@ -358,9 +358,10 @@ public:
 	}
 	void startNewSS() {
 		curSuperStep++;
-		if (terminated && getMessageCount() != 0) {
-			terminated = false;
-		}
+    if(!evenMessageQueue->empty() || !oddMessageQueue->empty()) {
+      terminated = false;
+      //std::cout <<"BBBBaaaaaaaaaAAAAAAAAAAA"  << terminated << std::endl;
+    }
 	}
 	int getCurrentSS() {
 		return curSuperStep;

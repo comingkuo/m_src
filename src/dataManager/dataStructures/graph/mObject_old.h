@@ -377,6 +377,8 @@ public:
 	}
 	void startNewSS() {
 		curSuperStep++;
+    //std::cout << "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKOld" <<"   mes count:" << getMessageCount()  <<std::endl;
+    //std::cout.flush();
 		if (terminated && getMessageCount() != 0) {
 			terminated = false;
 		}

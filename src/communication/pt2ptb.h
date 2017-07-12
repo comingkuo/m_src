@@ -1427,12 +1427,12 @@ public:
 			char* c = value.byteEncode(idsize);
 			int allocation_size = idsize + sizeof(int) * 7;
 
-			if (allocation_size > buffer_msgsize) {
+			/*if (allocation_size > buffer_msgsize) {
 				cout << "(" << rank
 						<< ") ERROR: ALLOCATION BUFFER EXCEEDED LIMIT "
 						<< allocation_size << endl;
 				cout.flush();
-			}
+			}*/
 
 			char* buf = (char*) malloc(allocation_size * sizeof(char)); //myCommMang->request_emptyBuff(index);
 			char *orig_start = buf;
@@ -1510,12 +1510,12 @@ public:
 			char * c = vertex_id.byteEncode(idsize);
 
 			int allocation_size = (sizeof(int) * 5) + idsize;
-			if (allocation_size > buffer_msgsize) {
+			/*if (allocation_size > buffer_msgsize) {
 				cout << "(" << rank
 						<< ") ALLOCATION BUFFER EXCEEDED LIMIT in DHT_I "
 						<< allocation_size << endl;
 				cout.flush();
-			}
+			}*/
 
 			char* send_buf = (char*) malloc(allocation_size * sizeof(char));
 			char * send_buf_start = send_buf;

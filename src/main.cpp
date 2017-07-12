@@ -24,7 +24,7 @@
 #include "algorithms/maxAggregator.h"
 #include "general.h"
 #include "algorithms/SSSP.h"
-#include "algorithms/ConnectedComponent.h"
+#include "algorithms/kuotest.h"
 
 using namespace std;
 
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
 		delete mmk;
 
 	} else if (myArgs.algorithm == 4) {
-		groupVoteToHalt = true;
+		groupVoteToHalt = false;
 		storageType = OutNbrStore;
 		SSSP sp(1,myArgs.superSteps);
 		SSSPCombiner spc;
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
 				mLong, mLong>(myArgs.communication, &sp, storageType,
 				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
 
-		mmk->registerMessageCombiner(&spc);
+		//mmk->registerMessageCombiner(&spc);
 
 		mmk->setVoteToHalt(groupVoteToHalt);
 
@@ -137,10 +137,10 @@ int main(int argc, char** argv) {
 	else if (myArgs.algorithm == 5) {
 		groupVoteToHalt = true;
 		storageType = OutNbrStore;
-		ConnectedComponent CC(myArgs.superSteps);
+		kuotest k(myArgs.superSteps);
 
 		Mizan<mLong, mLong, mLong, mLong> * mmk = new Mizan<mLong, mLong,
-			mLong, mLong>(myArgs.communication, &CC, storageType,
+			mLong, mLong>(myArgs.communication, &k, storageType,
 				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
 
 		string output;
@@ -151,6 +151,35 @@ int main(int argc, char** argv) {
 		mmk->setOutputPath(output.c_str());
 
 		mmk->setVoteToHalt(groupVoteToHalt);
+		mmk->run(argc, argv);
+		myWorkerID = mmk->getPEID();
+		delete mmk;
+
+	}
+	else if (myArgs.algorithm == 6) {
+		groupVoteToHalt = true;
+		storageType = InNbrStore;
+		dimEst dE(myArgs.superSteps);
+
+
+
+
+
+		Mizan<mLong, mLongArray, mLongArray, mLong> * mmk = new Mizan<mLong,
+			mLongArray, mLongArray, mLong>(myArgs.communication, &dE,
+				storageType, inputBaseFile, myArgs.clusterSize, myArgs.fs,
+				myArgs.migration, myArgs.threshold);
+		mmk->setVoteToHalt(groupVoteToHalt);
+
+		string output;
+		output.append("/user/");
+		output.append(myArgs.hdfsUserName.c_str());
+		output.append("/m_run_output/");
+		output.append(myArgs.graphName.c_str());
+		mmk->setOutputPath(output.c_str());
+
+
+
 		mmk->run(argc, argv);
 		myWorkerID = mmk->getPEID();
 		delete mmk;

@@ -147,9 +147,9 @@ public:
 		int allocation_size = (sizeof(int) * 10) + idsize;
 
 		if (allocation_size > buffer_msgsize) {
-			cout << "(" << getRank() << ") ALLOCATION BUFFER EXCEEDED LIMIT: "
+			/*cout << "(" << getRank() << ") ALLOCATION BUFFER EXCEEDED LIMIT: "
 					<< allocation_size << endl;
-			cout.flush();
+			cout.flush();*/
 
 			free(c);
 			return false;
@@ -215,9 +215,9 @@ public:
 
 		int allocation_size = (sizeof(int) * 5) + idsize;
 		if (allocation_size > buffer_msgsize) {
-			cout << "(" << getRank() << ") ALLOCATION BUFFER EXCEEDED LIMIT "
+			/*cout << "(" << getRank() << ") ALLOCATION BUFFER EXCEEDED LIMIT "
 					<< allocation_size << endl;
-			cout.flush();
+			cout.flush();*/
 			free(c);
 			return false;
 		} else {

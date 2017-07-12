@@ -19,7 +19,7 @@ class SSSPCombiner: public Icombiner<mLong, mLong, mLong, mLong> {
 private:
   // NOTE: making this into a macro is dangerous!!
   mLong min(mLong a, mLong b) {
-    return (a < b) ? a : b;
+     return (a.getValue() < b.getValue()) ? a : b;
   }
 
 public:
@@ -50,11 +50,14 @@ private:
   int maxSuperStep;
 
   bool isSrc(mLong id) {
-    return (id == srcID);
+    if (id.getValue() == srcID.getValue())
+      return true;
+    else
+      return false;
   }
 
   mLong min(mLong a, mLong b) {
-    return (a < b) ? a : b;
+    return (a.getValue() < b.getValue()) ? a : b;
   }
 
 public:
@@ -91,7 +94,7 @@ public:
     }
 
     // if new distance is smaller, notify out edges
-    if (newDist < currDist) {
+    if (newDist.getValue() < currDist.getValue()) {
       data->setVertexValue(newDist);
 
       for (int i = 0; i < data->getOutEdgeCount(); i++) {
@@ -103,7 +106,8 @@ public:
     }
 
     // always vote to halt
-    data->voteToHalt();
+    if(data->getCurrentSS() > maxSuperStep)
+      data->voteToHalt();
   }
 };
 #endif /* SSSP_H_ */
