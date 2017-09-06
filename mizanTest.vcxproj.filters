@@ -314,5 +314,14 @@
     <ClInclude Include="src\utilities\profiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\algorithms\kuotest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\Nstep.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithms\Inference.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

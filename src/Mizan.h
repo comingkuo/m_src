@@ -276,7 +276,7 @@ public:
 		}
 
 		if (next && iWantToTerminate) {
-      //cout << "TTTTTTTTTTTT276" << endl;
+      //cout << "TTTTTTTTTTTT276" << endl; almost use
 			terminateMizan();
 		} else if (next && !iWantToTerminate) {
 
@@ -293,19 +293,29 @@ public:
 		}
 	}
 	void terminateMizan() {
-		//cout << myRank << " is terminating.." << endl;
-		if (doWriteToDisk) {
-			strcat(outputFilePath, "/part_");
-			mInt rank(myRank);
-			strcat(outputFilePath, rank.toString().c_str());
-			dm->writeToDisk(outputFilePath);
+		//test kuo 20170722
+		bool terminate = true;
+		if (groupVoteToHalt == false) {//test kuo 20170906
+			for (int i = 0; i < peCommInTotalCnt.size(); i++) {
+				if (peCommInTotalCnt[i] != 0 || peCommOutGlobalCnt[i] != 0)
+					terminate = false;
+			}
 		}
-		dataPtr.sc->sendSelfExit();
-		if (myRank == 0) {
-			time_t appFinish = time(NULL);
-			std::cout << "-----TIME: Total Running Time without IO = "
+		//cout << myRank << " is terminating.." << endl;
+		if (terminate) {
+			if (doWriteToDisk) {
+				strcat(outputFilePath, "/part_");
+				mInt rank(myRank);
+				strcat(outputFilePath, rank.toString().c_str());
+				dm->writeToDisk(outputFilePath);
+			}
+			dataPtr.sc->sendSelfExit();
+			if (myRank == 0) {
+				time_t appFinish = time(NULL);
+				std::cout << "-----TIME: Total Running Time without IO = "
 					<< (appFinish - cm->getAppStart()) << std::endl;
 
+			}
 		}
 	}
 	void recvStealBarrier() {
@@ -510,8 +520,8 @@ public:
 		const clock_t start_Migrate = clock();
 
 		double average = 0;
-		int migrateNodes;
-		int prop = 0.3;
+    int migrateNodes;
+    int prop = 5400; // 0.3 *18000
 		bool migrationTest = dp->testForImbalance(&this->peSSResTimeWithDHT,
 				average, thresholdBB);
 		if (myRank == 0) {
@@ -533,7 +543,7 @@ public:
 					&peCommOutGlobalCnt);
 			int inMsgScore = dp->partitionMode(&this->peSSResTimeWithDHT,
 					&this->peCommInTotalCnt);// kuo modified 12/11/16
-			if (myRank == 0) {
+			if (myRank == 8) {
 				std::cout << "Dynamic outMsgScore = " << outMsgScore
 						<< " Dynamic inMsgScore = " << inMsgScore << std::endl;
 			}
@@ -551,7 +561,10 @@ public:
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
 
-				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop * 8000;
+        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
+        //testing
+        migrateNodes = 1600000;
+        //
 				//kuo testing out msg size start
 				//for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
 				//	cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
@@ -573,7 +586,7 @@ public:
 				}
 			} else if (inMsgScore > outMsgScore) {
 				//Migrate InMessages
-				if (myRank == 0) {
+				if (myRank == 8) {
 					cout << "PE" << myRank << " InNetwork based migration "
 							<< std::endl;
 				}
@@ -586,12 +599,17 @@ public:
 				//kuo找配對
 				int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
-				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop * 8000;
+        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
+        migrateNodes = 1600000;
 				//kuo testing in msg size end
 				//kuo算跟配對的差額
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommInTotalCnt, dstNetwork, globalZ);
 				//&peCommInGlobalCnt, dstNetwork, globalZ);
+
+      if(myRank == 8) {
+        cout << " 8888 myTestNetwork:" << myTestNetwork <<endl;
+      }
 
 				if (myTestNetwork) {
 					dp->findCandidateMessageInComm(vertexZ,
@@ -609,7 +627,8 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 						&ignoreSet, average, &peSSResTimeWithDHT);
-				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop * 8000;
+        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
+        migrateNodes = 1600000;
 				//kuo testing exec time start
 				//for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
 				//	cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
@@ -656,7 +675,8 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 					&ignoreSet, average, &peSSResTimeWithDHT);
-				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop * 8000;
+        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
+        migrateNodes = 1600000;
 
 				bool myTestMix = dp->multiGrubbsTestLong(outMsgDiff,
 					inMsgDiff, &peCommOutGlobalCnt,

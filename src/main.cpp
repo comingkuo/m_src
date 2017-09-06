@@ -25,6 +25,8 @@
 #include "general.h"
 #include "algorithms/SSSP.h"
 #include "algorithms/kuotest.h"
+#include "algorithms/Nstep.h"
+#include "algorithms/Inference.h"
 
 using namespace std;
 
@@ -108,7 +110,7 @@ int main(int argc, char** argv) {
 		myWorkerID = mmk->getPEID();
 		delete mmk;
 
-	} else if (myArgs.algorithm == 4) {
+	} else if (myArgs.algorithm == 4) { //SSSP
 		groupVoteToHalt = false;
 		storageType = OutNbrStore;
 		SSSP sp(1,myArgs.superSteps);
@@ -134,7 +136,7 @@ int main(int argc, char** argv) {
 		myWorkerID = mmk->getPEID();
 		delete mmk;
 	}
-	else if (myArgs.algorithm == 5) {
+	else if (myArgs.algorithm == 5) { //CC
 		groupVoteToHalt = true;
 		storageType = OutNbrStore;
 		kuotest k(myArgs.superSteps);
@@ -155,20 +157,36 @@ int main(int argc, char** argv) {
 		myWorkerID = mmk->getPEID();
 		delete mmk;
 
-	}
-	else if (myArgs.algorithm == 6) {
-		groupVoteToHalt = true;
-		storageType = InNbrStore;
-		dimEst dE(myArgs.superSteps);
+	} else if (myArgs.algorithm == 6) { //Diameter Estimate
+    groupVoteToHalt = true;
+    storageType = InNbrStore;
+    dimEst dE(myArgs.superSteps);
+
+    Mizan<mLong, mLongArray, mLongArray, mLong> * mmk = new Mizan<mLong,
+      mLongArray, mLongArray, mLong>(myArgs.communication, &dE, storageType, inputBaseFile, myArgs.clusterSize, myArgs.fs,
+      myArgs.migration, myArgs.threshold);
+    mmk->setVoteToHalt(groupVoteToHalt);
+
+    string output;
+    output.append("/user/");
+    output.append(myArgs.hdfsUserName.c_str());
+    output.append("/m_run_output/");
+    output.append(myArgs.graphName.c_str());
+    mmk->setOutputPath(output.c_str());
+
+    mmk->run(argc, argv);
+    myWorkerID = mmk->getPEID();
+    delete mmk;
+  } else if (myArgs.algorithm == 7) { //Nstep
+		groupVoteToHalt = false;
+		storageType = OutNbrStore;
+		Nstep NS(1, myArgs.superSteps);
 
 
+		Mizan<mLong, mLong, mLong, mLong> * mmk = new Mizan<mLong, mLong,
+			mLong, mLong>(myArgs.communication, &NS, storageType,
+				inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
 
-
-
-		Mizan<mLong, mLongArray, mLongArray, mLong> * mmk = new Mizan<mLong,
-			mLongArray, mLongArray, mLong>(myArgs.communication, &dE,
-				storageType, inputBaseFile, myArgs.clusterSize, myArgs.fs,
-				myArgs.migration, myArgs.threshold);
 		mmk->setVoteToHalt(groupVoteToHalt);
 
 		string output;
@@ -178,13 +196,31 @@ int main(int argc, char** argv) {
 		output.append(myArgs.graphName.c_str());
 		mmk->setOutputPath(output.c_str());
 
-
-
 		mmk->run(argc, argv);
 		myWorkerID = mmk->getPEID();
 		delete mmk;
+	} else if (myArgs.algorithm == 8) { //Inference
+	  groupVoteToHalt = false;
+	  storageType = OutNbrStore;
+	  Inference inf(myArgs.superSteps);
 
-	}
+	  Mizan<mLong, mDouble, mDouble, mDouble> * mmk = new Mizan<mLong, mDouble, 
+		  mDouble, mDouble>(myArgs.communication, &inf, storageType,
+			  inputBaseFile, myArgs.clusterSize, myArgs.fs, myArgs.migration, myArgs.threshold);
+
+	  mmk->setVoteToHalt(groupVoteToHalt);
+
+	  string output;
+	  output.append("/user/");
+	  output.append(myArgs.hdfsUserName.c_str());
+	  output.append("/m_run_output/");
+	  output.append(myArgs.graphName.c_str());
+	  mmk->setOutputPath(output.c_str());
+
+	  mmk->run(argc, argv);
+	  myWorkerID = mmk->getPEID();
+	  delete mmk;
+  }
 
 #ifdef Verbose
 	if (myWorkerID == 0) {

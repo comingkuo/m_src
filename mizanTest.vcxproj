@@ -133,7 +133,10 @@
     <ClInclude Include="src\algorithms\AdSim.h" />
     <ClInclude Include="src\algorithms\complexDimEst.h" />
     <ClInclude Include="src\algorithms\dimEst.h" />
+    <ClInclude Include="src\algorithms\Inference.h" />
+    <ClInclude Include="src\algorithms\kuotest.h" />
     <ClInclude Include="src\algorithms\maxAggregator.h" />
+    <ClInclude Include="src\algorithms\Nstep.h" />
     <ClInclude Include="src\algorithms\pageRank.h" />
     <ClInclude Include="src\algorithms\pageRankAllNBR.h" />
     <ClInclude Include="src\algorithms\pageRankTopK.h" />
