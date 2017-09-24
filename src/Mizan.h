@@ -116,6 +116,8 @@ private:
 	bool groupVoteToHalt;
 	enableVTH enableVertices;
 
+  bool terminate; // kuo 20170910
+
 	bool doWriteToDisk;
 	char * outputFilePath;
 	bool steelMode;
@@ -274,9 +276,8 @@ public:
 			next = true;
 			enableVertices = EnableWithMessages;
 		}
-
 		if (next && iWantToTerminate) {
-      //cout << "TTTTTTTTTTTT276" << endl; almost use
+      //cout << "TTTTTTTTTTTT276" << endl; //almost use
 			terminateMizan();
 		} else if (next && !iWantToTerminate) {
 
@@ -293,30 +294,34 @@ public:
 		}
 	}
 	void terminateMizan() {
-		//test kuo 20170722
-		bool terminate = true;
-		if (groupVoteToHalt == false) {//test kuo 20170906
-			for (int i = 0; i < peCommInTotalCnt.size(); i++) {
-				if (peCommInTotalCnt[i] != 0 || peCommOutGlobalCnt[i] != 0)
-					terminate = false;
-			}
+    //test kuo 20170722
+    if(groupVoteToHalt == false) {
+		 //   cout << myRank << "  size!!!!" << peCommInTotalCnt.empty() << endl;
+     for(int i = 0; i < peSSResTimeWithDHT.size(); i++) {
+      //if(!peCommInTotalCnt.empty() || !peCommOutGlobalCnt.empty() || !peCommInXTotalCnt.empty()) {
+      if(peCommInTotalCnt[i] != 0 || !peCommOutGlobalCnt[i] != 0|| !peCommInXTotalCnt[i]!= 0) {
+         terminate = false;
+		    //cout << myRank << "  terminating false!!!!!!!!!!!!!!!!!!" << endl;
+      
+      }
+     }
+    }
+	//	cout << myRank << "KKK is terminating.."<< groupVoteToHalt  <<"  ter" << terminate<< endl;
+    if(!terminate) {
+		if (doWriteToDisk) {
+			strcat(outputFilePath, "/part_");
+			mInt rank(myRank);
+			strcat(outputFilePath, rank.toString().c_str());
+			dm->writeToDisk(outputFilePath);
 		}
-		//cout << myRank << " is terminating.." << endl;
-		if (terminate) {
-			if (doWriteToDisk) {
-				strcat(outputFilePath, "/part_");
-				mInt rank(myRank);
-				strcat(outputFilePath, rank.toString().c_str());
-				dm->writeToDisk(outputFilePath);
-			}
-			dataPtr.sc->sendSelfExit();
-			if (myRank == 0) {
-				time_t appFinish = time(NULL);
-				std::cout << "-----TIME: Total Running Time without IO = "
+		dataPtr.sc->sendSelfExit();
+		if (myRank == 0) {
+			time_t appFinish = time(NULL);
+			std::cout << "-----TIME: Total Running Time without IO = "
 					<< (appFinish - cm->getAppStart()) << std::endl;
 
-			}
 		}
+    }
 	}
 	void recvStealBarrier() {
 		//cout << "PE" << myRank << " recvStealBarrier()" << std::endl;
@@ -340,10 +345,55 @@ public:
 		cm->gatherStats();
 		cm->performDataMutations();
 		bool subTerminate = cm->cleanUp(enableVertices);
-		if (subTerminate == true) {
-      //cout << "TTTTTTTTTTTT331" << endl;
+
+    int subTer= (bool)subTerminate;
+    cout << "subTer[" << myRank << "]: " << subTer;
+ 
+   /* int rank_size = 10; //kuo 20170912 ¿¿¿,¿¿¿!!
+    int subTers[10] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }; //kuo 20170912 ¿¿¿,¿¿¿!!
+    if (myRank == 0) {
+      subTers[1] = 5555;
+    }
+    cout << "BeforeKUO!!!!! myRank:" << myRank << "subTers[1]:" << subTers[1] << endl;
+    subTers[myRank] = (int) subTerminate;
+    //commMang.sendBMsg(subTers+(sizeof(int) * myRank), 1, 0);
+    commMang.sendBMsg(subTers, rank_size, 0);
+    //commMang.comBarrier();// kuo 20170911
+    cout << "KUO!!!!! myRank:" << myRank << "subTers[1]:" << subTers[1] << endl;*/
+
+    int subTerRank = (int)subTerminate;//kuo 20170923
+    int rank_size = 10;
+    int *subTers = new int[rank_size]();
+    //MPI_Gather(&subTerRank, 1, MPI_INT, subTers, 1, MPI_INT, 0,MPI_COMM_WORLD);
+    commMang.gatherMsg(subTers, subTerRank, 0);
+    subTerRank=1;
+    if (myRank == 0) {
+      for (int i = 0; i < rank_size; i++) {
+        //if (subTers[i] != 0) //if subTerminate = false
+        //cout << "KUO@@@ rank " << i << " assume terminate:" << subTers[i] << " actually terminate " << subTerminate << endl;
+        if (subTers[i] == 0) {//if subTerminate = false
+            subTerRank = 0;
+            break;
+        }
+      }
+      //subTerRank=777;
+    }
+    commMang.sendBMsg(&subTerRank, 0);//kuo 20170923
+    cout <<"KUO!!!!! myRank:" << myRank << "subTerRank:" << subTerRank << endl;
+    subTerminate = (bool) subTerRank;
+    delete[] subTers;
+
+
+
+
+
+
+
+		if (subTerminate == true && superStepCounter != 1) {
+      //cout << "TTTTTTTTTTTT331"  <<"   enableV " << enableVertices <<endl;
 			terminateMizan();
 		} else {
+      //cout << "TTTTTTTTTTTT352"  <<"   enableV " << enableVertices <<endl;
 			mLong * array = new mLong[8];
 			array[0].setValue(myRank);
 			array[1].setValue(ssActualFinish);
@@ -357,6 +407,15 @@ public:
 			array[7].setValue(
 					((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
 			mLongArray value(8, array);
+
+      terminate = false; //kuo 20170910
+      if(groupVoteToHalt == false) {// kuo 20170910
+        for(int i = 0; i < peSSResTimeWithDHT.size(); i++) {
+          if(peCommInTotalCnt[i] != 0 || !peCommOutGlobalCnt[i] != 0|| !peCommInXTotalCnt[i]!= 0) {
+            terminate = true;
+           }
+        }
+      }
 
 			cm->storeInCommInfo();
 
@@ -381,23 +440,15 @@ public:
 
 		if (myRank == 0) {
 			int theRank = (int) (array[0].getValue());
-			/*std::cout << "PE" << theRank << " -----Messages: Actual Finish = "
-			 << peSSResTimeWithDHT[theRank] << " Global in comm = "
-			 << peCommInXTotalCnt[theRank] << "/"
-			 << peCommInTotalCnt[theRank] << " Global out Comm = "
-			 << peCommOutGlobalCnt[theRank] << " Memory Rem = "
-			 << peRemMem[theRank] << std::endl;*/
-
-			if (myRank == 0) {
-				std::cout << "PE" << theRank
-						<< " -----Messages: Actual Finish = "
-						<< peSSResTimeWithDHT[theRank] << " Global in comm = "
-						<< peCommInXTotalCnt[theRank] << "/"
-						<< peCommInTotalCnt[theRank] << " Global out Comm = "
-						<< peCommOutGlobalCnt[theRank] << " Memory Rem = "
-						<< peRemMem[theRank] << std::endl;
-				cout.flush();
-			}
+		  std::cout << "PE" << theRank
+        << " myRank  " <<myRank << "  " 
+				<< " -----Messages: Actual Finish = "
+			  << peSSResTimeWithDHT[theRank] << " Global in comm = "
+				<< peCommInXTotalCnt[theRank] << "/"
+				<< peCommInTotalCnt[theRank] << " Global out Comm = "
+				<< peCommOutGlobalCnt[theRank] << " Memory Rem = "
+				<< peRemMem[theRank] << std::endl;
+			cout.flush();
 		}
 
 		if (sysGroupMessageCounter[LateStats] == PECount) {
@@ -435,6 +486,7 @@ public:
 			std::cout << "PE" << minMemRank << " -----Messages: Min Mem = "
 					<< minMem << " -----" << std::endl;
 		}
+
 
 		if (dynamicPart) {
 			//std::cout << "dynamicPart" << std::endl;
@@ -561,9 +613,10 @@ public:
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
 
-        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
+        migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
+        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
         //testing
-        migrateNodes = 1600000;
+        //migrateNodes = 1600000;
         //
 				//kuo testing out msg size start
 				//for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
@@ -599,8 +652,9 @@ public:
 				//kuo§ä°t¹ï
 				int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
-        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
-        migrateNodes = 1600000;
+        migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
+        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
+        //migrateNodes = 1600000;
 				//kuo testing in msg size end
 				//kuoºâ¸ò°t¹ïªº®tÃB
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
@@ -627,8 +681,9 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 						&ignoreSet, average, &peSSResTimeWithDHT);
-        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
-        migrateNodes = 1600000;
+        migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
+        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
+        //migrateNodes = 1600000;
 				//kuo testing exec time start
 				//for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
 				//	cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
@@ -675,8 +730,10 @@ public:
 
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 					&ignoreSet, average, &peSSResTimeWithDHT);
-        //migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
-        migrateNodes = 1600000;
+        migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
+
+        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
+        //migrateNodes = 1600000;
 
 				bool myTestMix = dp->multiGrubbsTestLong(outMsgDiff,
 					inMsgDiff, &peCommOutGlobalCnt,
@@ -1046,7 +1103,6 @@ public:
       sss = time(NULL);
       syzz = ((float) (sss - sss2));
     }
-
 		if (myRank == 0) {
 			std::cout << " ---------- Starting Superstep " << superStepCounter
 					<< " ----------Time:" << syzz << endl;

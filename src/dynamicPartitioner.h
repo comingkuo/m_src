@@ -165,10 +165,10 @@ public:
 
 		//kuo testing correlation
 		double sigmaXY=0, sigmaX=0, sigmaY=0, correlation=0;
-		for (int i = 0; i < timeVec.size(); i++) {
-			tmp = (timeMap->at(i) - timeAve) * (networkMap->at(i) - networkAve);
-			sigmaXY += tmp;
-		}
+		for(int i=0;i< timeVec.size();i++) {
+      tmp = (timeMap->at(i) - timeAve) * (networkMap->at(i) - networkAve);
+      sigmaXY += tmp;
+    }
 		for(int i=0;i<timeVec.size();i++)
 			sigmaX += pow(timeVec[i] - timeAve, 2);
 		sigmaX = sqrt(sigmaX);
@@ -180,8 +180,12 @@ public:
 			cout << "kuo --- negative correlation!!!\\n";
 
 		correlation = sigmaXY/(sigmaX*sigmaY);
-		//cout << "my rank:" << myRank << " , inNout correlation value:" << correlation << endl;
-	if (correlation >= 0.7) { // strong linear relationship
+    /*if(myRank == 0) {
+		  cout << "my rank:" << myRank << " , TimeAve:" << timeAve << "  ,netAve" << networkAve << "   timeVec[0]" << timeVec[0] << "  netVec[0]" << networkVec[0] << endl;
+		  cout << "my rank:" << myRank << " , sigmaX:" << sigmaX << "  ,sigmaY:" << sigmaY << "   ,sigmaXY" << sigmaXY << endl;
+		  cout << "my rank:" << myRank << " , inNout correlation value:" << correlation << endl;
+    }*/
+		if (correlation >= 0.7) { // strong linear relationship
       return 3;
     } else if (correlation >= 0.5 && correlation <0.7) {//weak relationship
       return 2;
@@ -194,7 +198,7 @@ public:
 
 	int findPEPairLong(std::map<int, long long> * sample,//kuo-20170312
 			std::set<int> * ignoreList, double average, std::map<int, long long> * timeCompare) {
-		int tmp;
+		
 		vector<pair<int, long long>> timeRankPair;
 		for (int i = 0; i < sample->size(); i++)
 			timeRankPair.push_back(make_pair(i, sample->at(i)));// 將rank及migrate objective的配對放入
@@ -206,21 +210,23 @@ public:
 			boost::bind(&std::pair<int, long long>::second, _1) <
 			boost::bind(&std::pair<int, long long>::second, _2));
 
-		//20170520 kuo
-		int tmpSize = timeRankPair.size() / 2;
-		int tmp;
-		for (int i = 0 ; i < tmpSize; i++) { //如果objective小的內有ignoreset成員，則去除
-			tmp = timeRankPair[i].first;
-			if (ignoreList->find(tmp) != ignoreList->end()) {
-				timeRankPair.erase(timeRankPair.begin() + i);
-				i--;
-				tmpSize = timeRankPair.size() / 2;
-			}
-		}
-		sort(timeRankPair.begin(), timeRankPair.end(), //針對去除ignore set的再次排序
-			boost::bind(&std::pair<int, long long>::second, _1) <
-			boost::bind(&std::pair<int, long long>::second, _2));
-		//20170520 kuo
+//20170520 kuo
+    int tmpSize = timeRankPair.size() / 2;
+    int tmp;
+    for (int i = 0 ; i < tmpSize; i++) { //
+      tmp = timeRankPair[i].first;
+      if (ignoreList->find(tmp) != ignoreList->end()) {
+        timeRankPair.erase(timeRankPair.begin() + i);
+        i--;
+        tmpSize = timeRankPair.size() / 2;
+      }
+    }
+    sort(timeRankPair.begin(), timeRankPair.end(), 
+      boost::bind(&std::pair<int, long long>::second, _1) <
+      boost::bind(&std::pair<int, long long>::second, _2));
+//20170520 kuo
+
+
 
 
 		int myPairPos = myRank;
@@ -230,12 +236,18 @@ public:
 					(timeRankPair.size() - 1) - i].first; //找出overloading 與 underloading配對
 		}
 
+    if(myRank == 8 ) {
+      cout << "88888888 myPairPos: " << myPairPos <<endl;
+    }
 		if (ignoreList->find(myPairPos) == ignoreList->end()) {
 			  long long temp;
 			  temp = abs(timeCompare->at(myRank) - timeCompare->at(myPairPos));
 			  if(temp > 1)
 				  return myPairPos;
-		}
+		} else {
+
+      cout <<"myPairPos:  NOOOOOOOOOOO" << myPairPos <<endl;
+    }
 		return myRank;
 
 	}
@@ -386,7 +398,7 @@ public:
 				sumComm = sumComm + tmpObj->getOutGlobal();
 				tmpObj->setMigrationMark();
 				dataManagerPtr->copyVertexToSoftDynamicContainer(tmpObj, dst);
-			} if (sumComm > diff || countNodes > migrateNodes) {
+			} if (sumComm > diff|| countNodes > migrateNodes) {
 				break;
 			}
 			verticeSorted.pop();
@@ -512,8 +524,10 @@ public:
 		diff = sample->at(myRank) - ((sample->at(dst)==0)?mean:sample->at(dst)); //mean; //
 		float z = diff / stdv;
 
-		//cout << "PE" << myRank << " z = " << z << std::endl;
-		//<< " diff = " << diff/2 << " sample->at(myRank) = " << sample->at(myRank) << " stdv = " << stdv << endl;
+    if(myRank == 8) {
+		cout << "PE" << myRank << " z = " << z 
+		<< " diff = " << diff << " sample->at(myRank) = " << sample->at(myRank) << " stdv = " << stdv << endl;
+    }
 
 		diff = diff / 2;
 		if (z < globalZ) {

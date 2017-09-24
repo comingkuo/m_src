@@ -46,6 +46,9 @@ public:
 	virtual void MapMizan(Mizan<K, V1, M, A> * x)=0;
 	virtual int get_rank()=0;
 	virtual int get_psize()=0;
+  virtual void Bcast( int*, int)=0;//kuo 20170923
+  virtual void Gather(int[], int, int) = 0;//kuo 20170923
+  virtual void ptBarrier() = 0; //kuo 20170911
 };
 
 #endif /* ICOMMUNICATE_H_ */

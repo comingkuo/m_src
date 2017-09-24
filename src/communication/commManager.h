@@ -9,10 +9,8 @@
 #define COMMMANAGER_H_
 
 #include "dataStructures/dht.h"
-#include "dataStructures/gdht.h"
 #include "dataStructures/multi-val-map.h"
 #include "dataStructures/bufferpool.h"
-#include "ring.h"
 #include "pt2ptb.h"
 #include "thread_manager.h"
 #include "../dataManager/dataStructures/data/mLong.h"
@@ -49,16 +47,7 @@ public:
 		return mizan->vertexExists(id);
 	}
 	void init(int argc, char** argv) {
-
-		if (this->commType == _pt2ptb) {
-			dxxx = new pt2ptb<K, V1, M, A>(argc, argv);
-		} else {
-			if (this->commType == _ring) {
-				//dxxx = new ring<K, V1, M, A>(argc, argv);
-			}
-
-		}
-
+		dxxx = new pt2ptb<K, V1, M, A>(argc, argv);
 	}
 
 	void MapThreadMananger(thread_manager* x) {
@@ -172,7 +161,18 @@ public:
 	int getPsize() {
 		return dxxx->get_psize();
 	}
-
+  void sendBMsg(int* broadcast_v,int sourceRank) { //kuo 20170923
+    dxxx->Bcast(broadcast_v, sourceRank);
+    return;
+  }
+  void gatherMsg(int subTers[],int subRank, int destRank) { //kuo 20170923
+    dxxx->Gather(subTers, subRank, destRank);
+    return;
+  }
+  void comBarrier() {// kuo20170911
+    dxxx->ptBarrier();
+    return;
+  }
 };
 
 #endif /* COMMUNICATION_MANAGER_H_ */

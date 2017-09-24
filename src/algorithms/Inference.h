@@ -15,17 +15,9 @@
 */
 class Inference : public IsuperStep<mLong, mDouble, mDouble, mDouble> {
 private:
-	const double threshold = 0.9;
-	const double ACTIVE_VALUE = 0.9;
+	const double threshold = 0.3;
+	const double ACTIVE_VALUE = 0.3;
 	int maxSuperStep;
-	mLong srcID;
-
-	bool isSrc(mLong id) {
-		if (id.getValue() == srcID.getValue())
-			return true;
-		else
-			return false;
-	}
 
 	double fRand()
 	{
@@ -37,16 +29,11 @@ private:
 
 public:
 
-	Inference(mLong srcID, int maxSS) : srcID(srcID), maxSuperStep(maxSS) {}
+	Inference(int maxSS) : maxSuperStep(maxSS) {}
 
 	void initialize(userVertexObject<mLong, mDouble, mDouble, mDouble> * data) {
 		
-		if (isSrc(data->getVertexID())) {
-			data->setVertexValue(0.95);
-		}
-		else {
-			data->setVertexValue(fRand());
-		}
+		data->setVertexValue(fRand());
 		double tmp;
 		for (int i = 0; i < data->getOutEdgeCount(); i++) {
 			tmp = fRand() / 10;
@@ -81,7 +68,9 @@ public:
 				data->setVertexValue(influence);
 			}
 		}
-		data->voteToHalt();
+
+    //if(data->getCurrentSS() > maxSuperStep)
+  		data->voteToHalt();
 	}
 };
 

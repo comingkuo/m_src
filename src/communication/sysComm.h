@@ -10,10 +10,8 @@
 
 #include "commManager.h"
 #include "dataStructures/dht.h"
-#include "dataStructures/gdht.h"
 #include "dataStructures/multi-val-map.h"
 #include "dataStructures/bufferpool.h"
-#include "pt2pt.h"
 #include "thread_manager.h"
 #include "../dataManager/dataStructures/data/mLong.h"
 #include "../computation/computeManager.h"

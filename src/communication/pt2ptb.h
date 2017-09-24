@@ -3,6 +3,7 @@
  *
  *  Created on: Jun 9, 2012
  *      Author: awaraka
+ *  Modified by Kuo Sep 23, 2017
  */
 
 #ifndef PT2PTB_H_
@@ -10,7 +11,6 @@
 
 #include "Icommunicate.h"
 #include "dataStructures/dht.h"
-#include "dataStructures/gdht.h"
 #include "dataStructures/map-queue.h"
 #include "dataStructures/multi-val-map.h"
 #include "dataStructures/multi-val-map2.h"
@@ -74,13 +74,6 @@ private:
 
 	void reset_databuffer(int PEdest) {
 
-//		DATA_buffers[PEdest] = bp.request_buffer(DATA_buffers_indexes[PEdest]);
-//		DATA_buffers_cursors[PEdest] = DATA_buffers[PEdest];
-//		DATA_buffers_counters[PEdest] = 0;
-//		msgHeader mCode = _DATA;
-//		append_int_val(DATA_buffers_cursors[PEdest], mCode);
-//		DATA_buffers_counters[PEdest] += sizeof(int);
-
 		DATA_buffers[PEdest] = (char*) malloc(data_msgsize * sizeof(char));
 		DATA_buffers_cursors[PEdest] = DATA_buffers[PEdest];
 		DATA_buffers_counters[PEdest] = 0;
@@ -91,12 +84,7 @@ private:
 	}
 
 	bool validate_DATAbuffer_insertion(const int databuf_size, const int dest) {
-		//int for char size integer + original char value size + the destination integer
-
 		int count = (DATA_buffers_counters[dest] + databuf_size);
-
-		//cout << "(" << getRank() << ") Buf: "<<count<<">? "<<data_msgsize<<endl;
-
 		return (count < (data_msgsize - (sizeof(int) * 2)));
 	}
 
@@ -104,8 +92,6 @@ private:
 		DATA_CMDS dCode;
 		memcpy(&dCode, recv_buf, sizeof(int));
 		recv_buf += sizeof(int);
-		//		cout << "(" << getRank() << ") Received -- " << DATA_CMDS_strings[dCode]
-		//				<< " message from " << from_rank << endl;
 		while (dCode != ENDDMSG) {
 
 			if (dCode == SSdata) {
@@ -123,12 +109,6 @@ private:
 				int msg_size;
 				memcpy(&msg_size, recv_buf, sizeof(int));
 				recv_buf += sizeof(int);
-				/*
-				 cout << "(" << this->getRank() << ") MSG SIZE: " << msg_size
-
-				 << endl;
-				 cout.flush();*/
-
 				//we insert msg data
 				char * recv_msg = (char*) malloc(msg_size * sizeof(char));
 				memcpy(recv_msg, recv_buf, msg_size);
@@ -156,12 +136,6 @@ private:
 					int msg_size;
 					memcpy(&msg_size, recv_buf, sizeof(int));
 					recv_buf += sizeof(int);
-					/*
-					 cout << "(" << this->getRank() << ") MSG SIZE: " << msg_size
-
-					 << endl;
-					 cout.flush();*/
-
 					//we insert msg data
 					char * recv_msg = (char*) malloc(msg_size * sizeof(char));
 					memcpy(recv_msg, recv_buf, msg_size);
@@ -192,12 +166,6 @@ private:
 						int msg_size;
 						memcpy(&msg_size, recv_buf, sizeof(int));
 						recv_buf += sizeof(int);
-						/*
-						 cout << "(" << this->getRank() << ") MSG SIZE: " << msg_size
-
-						 << endl;
-						 cout.flush();*/
-
 						//we insert msg data
 						char * recv_msg = (char*) malloc(
 								msg_size * sizeof(char));
@@ -255,19 +223,12 @@ private:
 		recvbuf += sizeof(int);
 
 		while (sysCode != ENDMSG) {
-			//
-			/*cout << "(" << getRank() << ") parsed a "
-			 << SYS_CMDS_strings[sysCode] << " code from " << from_rank
-			 << endl;
-			 cout.flush();*/
-
 			if (sysCode == DHT_I) {
 				//msg format: id size, id, dest
 				int id_size, dest_val;
 				memcpy(&id_size, recvbuf, sizeof(int));
 				recvbuf += sizeof(int);
 
-				//cout << "(" << getRank() << ") Size: " << id_size << endl;
 				char *dht_VID = (char*) malloc(id_size * sizeof(char));
 				memcpy(dht_VID, recvbuf, id_size);
 				recvbuf += id_size;
@@ -278,30 +239,11 @@ private:
 				K dht_VID_value;
 				dht_VID_value.byteDecode(id_size, dht_VID);
 
-//				cout << "(" << rank << ") Remoted DHT("
-//						<< dht_VID_value.getValue() << "," << dest_val << ")"
-//						<< endl;
-//				cout.flush();
-
 				int dest_dht = dht_comm->retrieve_val(dht_VID_value);
 				dht_comm->insert_KeyVal(dht_VID_value, dest_val);
 
 				if (dest_dht != -1) {
-
-//					cout << "###(" << rank
-//							<< ") THIS IS A MIGRATED VERTEX new DHT["
-//							<< ((mLong) dht_VID_value).getValue() << ","
-//							<< dest_val << "]" << endl;
-//					cout.flush();
-
 					vector<int> PEs_list = V_PEs.retrieve_val(dht_VID_value);
-
-//					cout << "\t ###(" << rank << ") ITS Associated PEs: ";
-//					for (int i = 0; i < PEs_list.size(); i++) {
-//						cout << PEs_list[i] << ",";
-//					}
-//					cout << endl;
-//					cout.flush();
 
 					for (int i = 0; i < PEs_list.size(); i++) {
 						int buf_idx;
@@ -332,9 +274,6 @@ private:
 
 						sendMPICommand(buf_start, buf_count, PEs_list[i]);
 						free(buf_start);
-						//SendNONBlock(buf_start, buf_idx, buf_count,
-						//	PEs_list[i]);
-						//bp.set_free_buff(buf_idx);
 					}
 
 				}
@@ -343,10 +282,6 @@ private:
 			} else {
 				if (sysCode == DHT_A) {
 
-					//					cout << "(" << getRank() << ") Received "
-					//							<< SYS_CMDS_strings[sysCode] << " from ["
-					//							<< from_rank << "]" << endl;
-					//					cout.flush();
 					//size of id , id char encoded
 					int id_size;
 					memcpy(&id_size, recvbuf, sizeof(int));
@@ -361,8 +296,6 @@ private:
 
 					int desired_dest = dht_comm->retrieve_val(dht_VID_value);
 
-//					cout<<"PE"<<rank<<" saving interval["<<dht_VID_value.getValue()<<","<<from_rank<<"]"<<endl;
-//					cout.flush();
 					if (mizan->isDynamicPartEnabled()) {
 						V_PEs.insert_KeyVal(dht_VID_value, from_rank);
 					}
@@ -375,18 +308,11 @@ private:
 						append_int_val(responsebuf_start, mCode);
 						append_DHT_RSP(dht_VID, id_size, desired_dest,
 								responsebuf_start);
-						//						cout << "(" << getRank() << ") The answer of Val: "
-						//								<< dht_VID_value.getValue() << "'s location is "
-						//								<< desired_dest << " - forwarding to: "
-						//								<< from_rank << endl;
-						//						cout.flush();
 						SYS_CMDS sys = ENDMSG;
 						append_int_val(responsebuf_start, sys);
 						int buf_size = responsebuf_start - the_buf;
 						sendMPICommand(the_buf, buf_size, from_rank);
 						free(the_buf);
-//						SendNONBlock(the_buf, buff_index, buf_size, from_rank);
-//						bp.set_free_buff(buff_index);
 
 					} else {
 						cout << "(" << rank
@@ -450,7 +376,6 @@ private:
 							memcpy(&id_size, recvbuf, sizeof(int));
 							recvbuf += sizeof(int);
 
-							//cout << "(" << getRank() << ") Size: " << id_size << endl;
 							char *dht_VID = (char*) malloc(
 									id_size * sizeof(char));
 							memcpy(dht_VID, recvbuf, id_size);
@@ -462,21 +387,12 @@ private:
 							K dht_VID_value;
 							dht_VID_value.byteDecode(id_size, dht_VID);
 
-//							cout << "(" << rank << ") UPDATED DHT("
-//									<< dht_VID_value.getValue() << ","
-//									<< dest_val << ")" << endl;
-//							cout.flush();
 
-							//
 
 							discovered_maps->insert_KeyVal(dht_VID_value,
 									dest_val);
 							int test_dest = discovered_maps->retrieve_val(
 									dht_VID_value);
-//							cout << "(" << rank << ") UPDATED MAP("
-//									<< dht_VID_value.getValue() << ","
-//									<< test_dest << ")" << endl;
-//							cout.flush();
 							free(dht_VID);
 
 						} else {
@@ -484,18 +400,6 @@ private:
 							if (sysCode == EndofSS) {
 
 								EndofSS_count++;
-//								cout << "(" << rank << ") EndofSS count="
-//										<< EndofSS_count << endl;
-//								cout.flush();
-
-//								if (EndofSS_count == psize) {
-//									bool isempty = CMDSQueue.isQeueEmpty();
-//									cout << "(" << rank
-//											<< ") after the all 16 ENDOFSS: QUEUE is "
-//											<< isempty << endl;
-//									cout.flush();
-//								}
-
 								int count = -1;
 								memcpy(&count, recvbuf, sizeof(int));
 								recvbuf += sizeof(int);
@@ -523,20 +427,6 @@ private:
 								}
 
 							} else {
-
-								/*if (sysCode == InitVertexCount
-								 || sysCode == FinishInit
-								 || sysCode == EndofSS
-								 || sysCode == Terminate
-								 || sysCode == StartSS
-								 || sysCode == SSExecTime
-								 || sysCode == VertexMigrate) {*/
-
-//							cout << "(" << rank << ") in sys  "<<endl;
-//							cout << "(" << rank << ") Received "
-//									<< SYS_CMDS_strings[sysCode] << " from ["
-//									<< from_rank << "]" << endl;
-//							cout.flush();
 								if (sysCode == StartSS) {
 									k_dataMsgsCount = 0;
 									EndofSS_count = 0;
@@ -569,14 +459,6 @@ private:
 								}
 							}
 
-							/*} else {
-
-							 cout << "(" << rank
-							 << ") ############# ERROR: UNKNOWN COMMAND ############## "
-							 << endl;
-
-							 }*/
-
 						}
 					}
 
@@ -602,14 +484,10 @@ private:
 
 			sendMPICommand(buf, p_array[i].getSize(), new_dest);
 			free(buf);
-			//SendNONBlock(buf, buf_index, p_array[i].getSize(), new_dest);
-			//bp.set_free_buff(buf_index);
 		}
 	}
 
 	void append_IdataType(char*& recvbuf, int idsize, char* c) {
-//		int idsize;
-//		char* c = value.byteEncode(idsize);
 
 		//we insert the string length
 		memcpy(recvbuf, &idsize, sizeof(int));
@@ -619,20 +497,14 @@ private:
 		memcpy(recvbuf, c, idsize);
 		recvbuf += idsize;
 
-//		free(c);
-
 	}
 
 	void ConstructbMsg_of_PendingData(K & e1, int new_dest, char* encoded_id,
 			int id_size) {
 		std::vector<mCharArrayNoCpy> p_array;
 
-		//		cout << "(" << getRank() << ") retrieving msg values for VID["
-		//				<< e1.getValue() << "] " << endl;
-		//		cout.flush();
 		p_array = k_DataMsgs.retrieve_val(e1);
 
-		//append to msg
 
 		int data_msg_count = 0;
 		char * temp;
@@ -641,26 +513,20 @@ private:
 			char* the_buf = (char*) malloc(data_msgsize * sizeof(char));
 			char* responsebuf_start = the_buf;
 
-			//msgHeader HeaderM = _DATA;
 			DATA_CMDS dcode = SSdata;
 			data_msg_count = 0;
 			responsebuf_start = the_buf;
-			//append_int_val(responsebuf_start, HeaderM);
 
 			append_int_val(responsebuf_start, dcode);
 			MsgContent_PendingData(responsebuf_start, encoded_id, id_size,
 					p_array[i].getValue(), p_array[i].getSize());
 
-			//dcode = ENDDMSG;
-			//append_int_val(responsebuf_start, dcode);
 			data_msg_count = responsebuf_start - the_buf;
 			AppendBuffMsg(the_buf, data_msg_count, new_dest);
-			//sendMPICommand(the_buf, data_msg_count, new_dest);
 			free(the_buf);
 
 		}
 
-		//free(the_buf);
 
 	}
 
@@ -816,11 +682,7 @@ public:
 
 		if (!exist) {
 
-//				cout << "(" << rank << ") Vertex ID: " << id.getValue()
-//						<< " does not exist locally" << endl;
-//				cout.flush();
-
-			int loc = /*id.getValue() % psize ;*/dht_comm->retrieve_val(id);
+			int loc = dht_comm->retrieve_val(id);
 
 			boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
 					this->k_dataMsgsCount_lock);
@@ -865,7 +727,6 @@ public:
 							temp_buf_start);
 					k_DataMsgs.insert_KeyVal(id, tmp_obj);
 
-					//k_msgs.insert_KeyVal(id, msg, msglen);
 
 					buf_size = buf_start - Sendbuf;
 					sendMPICommand(Sendbuf, buf_size, dest);
@@ -875,28 +736,18 @@ public:
 
 					if (extra_info != -2) {
 
-//							cout << "(" << rank << ") Vertex ID: "
-//									<< id.getValue()
-//									<< " exists in Discovered DHT" << endl;
-//							cout.flush();
-
 						int dataMsg_count = 0;
 						char * Sendbuf = (char*) malloc(
 								data_msgsize * sizeof(char));
 						char *buf_start = Sendbuf;
 
-						//msgHeader HeadCode = _DATA;
-						//append_int_val(buf_start, HeadCode);
 						DATA_CMDS dsys = SSdata;
 						append_int_val(buf_start, dsys);
 
 						append_data_content(id, buf_start, msg, msglen);
 
-						//dsys = ENDDMSG;
-						//append_int_val(buf_start, dsys);
 						dataMsg_count = buf_start - Sendbuf;
 						AppendBuffMsg(Sendbuf, dataMsg_count, extra_info);
-						//sendMPICommand(Sendbuf, dataMsg_count, extra_info);
 
 						free(Sendbuf);
 						free(msg);
@@ -914,47 +765,26 @@ public:
 						mCharArrayNoCpy tmp_obj((sizeof(int) + msglen),
 								temp_buf_start);
 						k_DataMsgs.insert_KeyVal(id, tmp_obj);
-//						boost::mutex::scoped_lock test_lock =
-//								boost::mutex::scoped_lock(
-//										this->k_dataMsgsCount_lock);
-//						if (k_dataMsgsCount == 0) {
-//							hamza.lock();
-//						}
-//						k_dataMsgsCount++;
-//						test_lock.unlock();
 
 					}
 
 				}
-
 				test_lock.unlock();
-
-				//
 			} else {
-				//
 				int dataMsg_count = 0;
 				char * Sendbuf = (char*) malloc(data_msgsize * sizeof(char));
 				char *buf_start = Sendbuf;
-				//msgHeader HeadCode = _DATA;
-				//append_int_val(buf_start, HeadCode);
 				DATA_CMDS dsys = SSdata;
 				append_int_val(buf_start, dsys);
 
 				append_data_content(id, buf_start, msg, msglen);
-				//dsys = ENDDMSG;
-				//append_int_val(buf_start, dsys);
 				dataMsg_count = buf_start - Sendbuf;
 				AppendBuffMsg(Sendbuf, dataMsg_count, loc);
-				//sendMPICommand(Sendbuf, dataMsg_count, loc);
 				free(Sendbuf);
 				free(msg);
 			}
 
 		} else {
-			//message is local
-			//			cout << "(" << getRank() << ") Vertex ID: " << id.getValue()
-			//					<< " exists locally" << endl;
-			//			cout.flush();
 			mizan->appendLocalIncomeQueue(id, THE_MSG);
 			free(msg);
 		}
@@ -967,7 +797,7 @@ public:
 
 		if (!exist) {
 
-			int loc = id.getValue() % psize; //dht_comm->retrieve_val(id);
+			int loc = id.getValue() % psize; 
 			if (loc == -1) {
 				int extra_info = discovered_maps->retrieve_val(id);
 				if (extra_info == -1) {
@@ -993,7 +823,6 @@ public:
 					mCharArrayNoCpy tmp_obj(its_size, THE_MSG);
 					k_SYSMsgs.insert_KeyVal(id, tmp_obj);
 
-					//k_msgs.insert_KeyVal(id, msg, msglen);
 
 					int buf_size = buf_start - Sendbuf;
 					sendMPICommand(Sendbuf, buf_size, dest);
@@ -1005,13 +834,11 @@ public:
 
 						int buf_index;
 						char * buf = (char*) malloc(
-								(its_size + 1) * sizeof(char)); //bp.request_buffer(buf_index);
+								(its_size + 1) * sizeof(char)); 
 						memcpy(buf, THE_MSG, its_size);
 
 						sendMPICommand(buf, its_size, extra_info);
 						free(buf);
-						//SendNONBlock(buf, buf_index, its_size, extra_info);
-						//bp.set_free_buff(buf_index);
 
 						free(THE_MSG);
 
@@ -1024,18 +851,14 @@ public:
 
 				}
 
-				//
 			} else {
-				//
 
 				int buf_index;
-				char * buf = (char*) malloc(its_size * sizeof(char)); // bp.request_buffer(buf_index);
+				char * buf = (char*) malloc(its_size * sizeof(char)); 
 				memcpy(buf, THE_MSG, its_size);
 
 				sendMPICommand(buf, its_size, loc);
 				free(buf);
-				//SendNONBlock(buf, buf_index, its_size, loc);
-				//bp.set_free_buff(buf_index);
 
 				free(THE_MSG);
 
@@ -1045,13 +868,11 @@ public:
 
 			int buf_index;
 			char * buf = (char*) malloc(
-					(its_size + sizeof(int)) * sizeof(char)); //bp.request_buffer(buf_index);
+					(its_size + sizeof(int)) * sizeof(char)); 
 			memcpy(buf, THE_MSG, its_size);
 
 			sendMPICommand(buf, its_size, rank);
 			free(buf);
-			//SendNONBlock(buf, buf_index, its_size, rank);
-			//bp.set_free_buff(buf_index);
 			free(THE_MSG);
 		}
 
@@ -1076,37 +897,15 @@ public:
 				buf_size = DATA_buffers_cursors[i] - DATA_buffers[i];
 				sendMPICommand(DATA_buffers[i], buf_size, i);
 				free(DATA_buffers[i]);
-				//SendNONBlock(DATA_buffers[i], DATA_buffers_indexes[i], buf_size,
-				//		i);
-				//free_bpSendBuff(DATA_buffers_indexes[i]);
 				reset_databuffer(i);
 			}
 			test_lock.unlock();
 		}
 
-		//clearing the k_msgs map
-//		vector<K> LeftOver_keys = k_msgs.retrieve_LeftoverKeys();
-//
-//		for (int i = 0; i < LeftOver_keys.size(); i++) {
-//			int idsize;
-//			char* encoded_id = LeftOver_keys[i].byteEncode(idsize);
-//			int new_dest = discovered_maps->retrieve_val( LeftOver_keys[i]);
-//			if(new_dest < 0)
-//			{
-//				cout<<"******* ("<<rank<<") ERRORRR IN DISCOVERED MAPS: INVALID RANK"<<endl;
-//			}
-//			ConstructbMsg_of_PendingData(LeftOver_keys[i], new_dest, encoded_id,
-//					idsize);
-//			free(encoded_id);
-//		}
 
 	}
 
 	void AppendBuffMsg(char* buf, int buf_len, int PEdest) {
-
-//		cout << "(" << rank << ") NOT ALLOWED TO USE BUFF DATA" << endl;
-//		cout.flush();
-//		throw(230);
 
 		try {
 			boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
@@ -1127,9 +926,6 @@ public:
 
 				sendMPICommand(DATA_buffers[PEdest], buf_size, PEdest);
 				free(DATA_buffers[PEdest]);
-				//SendNONBlock(DATA_buffers[PEdest], DATA_buffers_indexes[PEdest],
-				//		buf_size, PEdest);
-				//bp.set_free_buff(DATA_buffers_indexes[PEdest]);
 				reset_databuffer(PEdest);
 
 				memcpy(DATA_buffers_cursors[PEdest], buf, buf_len);
@@ -1148,8 +944,6 @@ public:
 
 	void sendSyncMessage(char* sendbuf, int buf_size, int dest) {
 
-//		cout<<"("<<rank<<") Sync Send to process["<<dest<<"]"<<endl;
-//		cout.flush();
 		MPI_Ssend(sendbuf, buf_size, MPI_CHAR, dest, rank, MPI_COMM_WORLD);
 	}
 
@@ -1163,7 +957,6 @@ public:
 
 	void RecvMPICommand(char* recvbuf, int& from_rank,
 			int & actual_received_size) {
-		//recvbuf = new char[data_msgsize];
 		MPI_Request recv_req;
 		MPI_Status status;
 		MPI_Recv(recvbuf, buffer_msgsize, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
@@ -1192,10 +985,6 @@ public:
 		if (dest != -1)
 			MPI_Isend(buf, buf_size, MPI_CHAR, dest, rank, MPI_COMM_WORLD,
 					(bp.mpi_reqs[buff_index]));
-
-		//bp.set_free_buff(buff_index);
-
-		//MPI_Test(&(bp.mpi_reqs[buff_index]), &flag, &current_status);
 	}
 
 	void sendMessageToInNbrs(K &srcId, M &msg) {
@@ -1252,7 +1041,6 @@ public:
 					int buf_size = 0;
 					buf_size = buf - orig_start;
 
-					//AppendBuffMsg(orig_start, buf_size, dst_pe);
 					sendMPICommand(orig_start, buf_size, dst_pe);
 
 					free(orig_start);
@@ -1318,7 +1106,7 @@ public:
 
 				if (dst_pe != rank) {
 					int index;
-					char* buf = (char*) malloc(data_msgsize * sizeof(char)); //bp.request_buffer(index);
+					char* buf = (char*) malloc(data_msgsize * sizeof(char)); 
 					char *orig_start = buf;
 
 					msgHeader HeadCode = _DATA;
@@ -1336,21 +1124,15 @@ public:
 					int buf_size = 0;
 					buf_size = buf - orig_start;
 
-					//AppendBuffMsg(orig_start, buf_size, dst_pe);
 					sendMPICommand(orig_start, buf_size, dst_pe);
 
 					free(orig_start);
-					//bp.set_freeNotSend_buff(index);
 				} else {
 					mizan->appendIncomeQueueNbr(srcId, msg, OutNbrs);
 				}
 			}
 
 		} else {
-
-//			cout << "(" << rank << ") NOT FOUND RANKS for ID#"
-//					<< srcId.getValue() << endl;
-//			cout.flush();
 			it = dest_ranks.begin();
 			dest_ranks.erase(it, dest_ranks.end());
 
@@ -1376,13 +1158,9 @@ public:
 				int index;
 				char* buf = bp.request_buffer(index);
 				char *orig_start = buf;
-//			msgHeader head_code = _DATA;
-//			append_int_val(buf, head_code);
 				DATA_CMDS dsys = ALLVTX;
 				append_int_val(buf, dsys);
 				append_char_itsSize(buf, the_msg, msglen);
-//			dsys = ENDDMSG;
-//			append_int_val(buf, dsys);
 				int buf_size = 0;
 				buf_size = buf - orig_start;
 
@@ -1404,22 +1182,9 @@ public:
 		if ( pri == AFTER_DATABUFFER_PRIORITY /* command == EndofSS*/) {
 
 			hamza.lock();
-//			cout << "(" << rank << ") k_dataMsgsCount= " << k_dataMsgsCount
-//					<< endl;
-//			cout.flush();
 			hamza.unlock();
 			SendDataImmediately();
 		}
-//			bool exit_loop = false;
-//			while (!exit_loop) {
-//				boost::mutex::scoped_lock test_lock = boost::mutex::scoped_lock(
-//						this->k_dataMsgsCount_lock);
-//				if (k_dataMsgsCount == 0) {
-//					exit_loop = true;
-//				}
-//				test_lock.unlock();
-//			}
-
 		for (int i = 0; i < psize; i++) {
 			int index;
 
@@ -1427,14 +1192,7 @@ public:
 			char* c = value.byteEncode(idsize);
 			int allocation_size = idsize + sizeof(int) * 7;
 
-			/*if (allocation_size > buffer_msgsize) {
-				cout << "(" << rank
-						<< ") ERROR: ALLOCATION BUFFER EXCEEDED LIMIT "
-						<< allocation_size << endl;
-				cout.flush();
-			}*/
-
-			char* buf = (char*) malloc(allocation_size * sizeof(char)); //myCommMang->request_emptyBuff(index);
+			char* buf = (char*) malloc(allocation_size * sizeof(char)); 
 			char *orig_start = buf;
 			msgHeader mHead = _SYS;
 			append_int_val(buf, mHead);
@@ -1503,20 +1261,10 @@ public:
 
 		long mod = vertex_id.local_hash_value() % psize;
 		if (rank != mod) {
-//			cout << "\t &&&&&&&& (" << rank << ") Inform ownership to dht["<<mod<<"]"
-//					<< ((mLong) vertex_id).getValue() << endl;
-//			cout.flush();
 			int idsize;
 			char * c = vertex_id.byteEncode(idsize);
 
 			int allocation_size = (sizeof(int) * 5) + idsize;
-			/*if (allocation_size > buffer_msgsize) {
-				cout << "(" << rank
-						<< ") ALLOCATION BUFFER EXCEEDED LIMIT in DHT_I "
-						<< allocation_size << endl;
-				cout.flush();
-			}*/
-
 			char* send_buf = (char*) malloc(allocation_size * sizeof(char));
 			char * send_buf_start = send_buf;
 
@@ -1539,43 +1287,19 @@ public:
 
 			free(send_buf_start);
 		} else {
-//			cout << "\t ######^^^^####(" << rank << ") Inform ownership to dht (local)"
-//					<< ((mLong) vertex_id).getValue() << endl;
-//			cout.flush();
-
 			int v_loc = dht_comm->retrieve_val(vertex_id);
 			if (v_loc == -1) {
 				dht_comm->insert_KeyVal(vertex_id, rank);
 			} else {
-//				cout << "\t ###^^^^####(" << rank
-//						<< ") THIS IS A MIGRATED VERTEX - old DHT["
-//						<< ((mLong) vertex_id).getValue() << "," << v_loc
-//						<< endl;
-//				cout.flush();
-
 				dht_comm->insert_KeyVal(vertex_id, rank);
-//				int new_freaking_dest = dht_comm->retrieve_val(vertex_id);
-//				cout << "\t ###^^^^####(" << rank
-//						<< ") THIS IS A MIGRATED VERTEX - new DHT["
-//						<< ((mLong) vertex_id).getValue() << ","
-//						<< new_freaking_dest << endl;
-//				cout.flush();
-
 				vector<int> PEs_list = V_PEs.retrieve_val(vertex_id);
-
-//				cout << "\t ###(" << rank << ") ITS Associated PEs: ";
-//				for (int i = 0; i < PEs_list.size(); i++) {
-//					cout << PEs_list[i] << ",";
-//				}
-//				cout << endl;
-//				cout.flush();
 
 				for (int i = 0; i < PEs_list.size(); i++) {
 					int buf_idx;
 					int idsize;
 					char* c = vertex_id.byteEncode(idsize);
 					char* buf = (char*) malloc(
-							(7 * sizeof(int) + idsize) * sizeof(char)); //bp.request_buffer(buf_idx);
+							(7 * sizeof(int) + idsize) * sizeof(char)); 
 					char* buf_start = buf;
 
 					msgHeader x = _SYS;
@@ -1603,8 +1327,6 @@ public:
 
 					sendMPICommand(buf_start, buf_count, PEs_list[i]);
 					free(buf_start);
-//					SendNONBlock(buf_start, buf_idx, buf_count, PEs_list[i]);
-//					bp.set_free_buff(buf_idx);
 				}
 
 			}
@@ -1660,10 +1382,6 @@ public:
 				memcpy(&mCode, recv_buf, sizeof(int));
 				recv_buf += sizeof(int);
 
-				//			cout << "(" << getRank() << ") Received a "
-				//					<< msgHeader_strings[mCode] << " message from " << from_rank
-				//					<< endl;
-
 				if (mCode == _SYS) {
 					execute_SYSCmds(recv_buf, from_rank);
 				} else {
@@ -1700,6 +1418,19 @@ public:
 	int get_psize() {
 		return psize;
 	}
+
+  void Bcast(int* B_value, int sourceRank) { //kuo 20170923
+    MPI_Bcast(B_value , 1,MPI_INT, sourceRank, MPI_COMM_WORLD);
+  }
+
+  void Gather(int subTers[], int subRank, int destRank) { //kuo 20170923
+    MPI_Gather(&subRank, 1, MPI_INT, subTers, 1, MPI_INT, destRank, MPI_COMM_WORLD);
+  }
+
+  void ptBarrier(){ //kuo 20170911
+    MPI_Barrier(MPI_COMM_WORLD);
+    return;
+  }
 
 }
 ;

@@ -10,7 +10,6 @@
 
 #include "Icommunicate.h"
 #include "dataStructures/dht.h"
-#include "dataStructures/gdht.h"
 #include "dataStructures/map-queue.h"
 #include "dataStructures/multi-val-map.h"
 #include "dataStructures/multi-val-map2.h"

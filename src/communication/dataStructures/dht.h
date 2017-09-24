@@ -33,13 +33,7 @@ class DHT {
 	boost::mutex retrieve_m;
 
 public:
-
-//	GDHT() {
-//			local_dht.set_empty_key(NULL);
-//		}
-
 	void MapSysComm(sysComm<K, V1, M, A>* comm) {
-
 		mySysComm = comm;
 	}
 

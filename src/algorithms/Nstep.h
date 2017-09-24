@@ -15,7 +15,7 @@
 class Nstep : public IsuperStep<mLong, mLong, mLong, mLong> {
 private:
 	mLong srcID;
-	int maxSuperStep;
+  int maxSuperStep;
 
 	bool isSrc(mLong id) {
 		if (id.getValue() == srcID.getValue())
@@ -33,7 +33,10 @@ public:
 	/**
 	* \param srcID The vertex ID of the source.
 	*/
-	Nstep(mLong srcID, int maxSS) : srcID(srcID), maxSuperStep(maxSS) {}
+	Nstep(mLong sourceID, int maxSS) {
+    srcID = sourceID;
+    maxSuperStep = maxSS;
+  }
 
 	void initialize(userVertexObject<mLong, mLong, mLong, mLong> * data) {
 		// start all vertices with INF distance
@@ -71,8 +74,9 @@ public:
 		}
 
 		// always vote to halt
-		if (data->getCurrentSS() > maxSuperStep)
+		if (data->getCurrentSS() > maxSuperStep) {
+      //cout << "data->getCurrentSS()" << data->getCurrentSS() << "; maxSuperStep " << maxSuperStep;
 			data->voteToHalt();
+    }
 	}
 };
-

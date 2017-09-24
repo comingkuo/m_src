@@ -178,7 +178,7 @@ int main(int argc, char** argv) {
     myWorkerID = mmk->getPEID();
     delete mmk;
   } else if (myArgs.algorithm == 7) { //Nstep
-		groupVoteToHalt = false;
+		groupVoteToHalt = true;
 		storageType = OutNbrStore;
 		Nstep NS(1, myArgs.superSteps);
 
