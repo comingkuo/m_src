@@ -349,66 +349,42 @@ public:
     int subTer= (bool)subTerminate;
     cout << "subTer[" << myRank << "]: " << subTer;
  
-   /* int rank_size = 10; //kuo 20170912 真?真?!
-    int subTers[10] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }; //kuo 20170912 真?真?!
-    if (myRank == 0) {
-      subTers[1] = 5555;
-    }
-    cout << "BeforeKUO!!!!! myRank:" << myRank << "subTers[1]:" << subTers[1] << endl;
-    subTers[myRank] = (int) subTerminate;
-    //commMang.sendBMsg(subTers+(sizeof(int) * myRank), 1, 0);
-    commMang.sendBMsg(subTers, rank_size, 0);
-    //commMang.comBarrier();// kuo 20170911
-    cout << "KUO!!!!! myRank:" << myRank << "subTers[1]:" << subTers[1] << endl;*/
 
     int subTerRank = (int)subTerminate;//kuo 20170923
     int rank_size = 10;
     int *subTers = new int[rank_size]();
-    //MPI_Gather(&subTerRank, 1, MPI_INT, subTers, 1, MPI_INT, 0,MPI_COMM_WORLD);
     commMang.gatherMsg(subTers, subTerRank, 0);
     subTerRank=1;
     if (myRank == 0) {
       for (int i = 0; i < rank_size; i++) {
-        //if (subTers[i] != 0) //if subTerminate = false
-        //cout << "KUO@@@ rank " << i << " assume terminate:" << subTers[i] << " actually terminate " << subTerminate << endl;
         if (subTers[i] == 0) {//if subTerminate = false
             subTerRank = 0;
             break;
         }
       }
-      //subTerRank=777;
     }
     commMang.sendBMsg(&subTerRank, 0);//kuo 20170923
-    cout <<"KUO!!!!! myRank:" << myRank << "subTerRank:" << subTerRank << endl;
     subTerminate = (bool) subTerRank;
     delete[] subTers;
 
 
-
-
-
-
-
-		if (subTerminate == true && superStepCounter != 1) {
-      //cout << "TTTTTTTTTTTT331"  <<"   enableV " << enableVertices <<endl;
-			terminateMizan();
-		} else {
-      //cout << "TTTTTTTTTTTT352"  <<"   enableV " << enableVertices <<endl;
-			mLong * array = new mLong[8];
-			array[0].setValue(myRank);
-			array[1].setValue(ssActualFinish);
-			array[2].setValue(
-					cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
-			array[3].setValue(
-					cm->getSumInCommLocal() + cm->getSumInCommGlobal());
-			array[4].setValue(cm->getSumOutCommGlobal());
-			array[5].setValue(cm->getSumInCommGlobal());
-			array[6].setValue(cm->getXSumInCommGlobal());
-			array[7].setValue(
-					((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
-			mLongArray value(8, array);
-
-      terminate = false; //kuo 20170910
+	if (subTerminate == true && superStepCounter != 1) {
+		terminateMizan();
+	} else {
+		mLong * array = new mLong[8];
+		array[0].setValue(myRank);
+		array[1].setValue(ssActualFinish);
+		array[2].setValue(
+				cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
+		array[3].setValue(
+				cm->getSumInCommLocal() + cm->getSumInCommGlobal());
+		array[4].setValue(cm->getSumOutCommGlobal());
+		array[5].setValue(cm->getSumInCommGlobal());
+		array[6].setValue(cm->getXSumInCommGlobal());
+		array[7].setValue(
+				((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
+		mLongArray value(8, array);
+		      terminate = false; //kuo 20170910
       if(groupVoteToHalt == false) {// kuo 20170910
         for(int i = 0; i < peSSResTimeWithDHT.size(); i++) {
           if(peCommInTotalCnt[i] != 0 || !peCommOutGlobalCnt[i] != 0|| !peCommInXTotalCnt[i]!= 0) {
