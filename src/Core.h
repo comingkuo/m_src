@@ -1,11 +1,11 @@
 /*
- * Mizan.h
+ * Core.h
  *
  *  Created on: Mar 28, 2012
  *      Author: refops
  *  Fix on: Jan 31, 2017
  *		Author: Kou
- *  Description: Main function of Mizan
+ *  Description: Main function of GPSer
  */
 
 #ifndef MIZAN_H_
@@ -349,8 +349,8 @@ public:
     int subTer= (bool)subTerminate;
     cout << "subTer[" << myRank << "]: " << subTer;
  
-   /* int rank_size = 10; //kuo 20170912 ¿¿¿,¿¿¿!!
-    int subTers[10] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }; //kuo 20170912 ¿¿¿,¿¿¿!!
+   /* int rank_size = 10; //kuo 20170912 ¿¿?¿¿?!
+    int subTers[10] = { 5, 5, 5, 5, 5, 5, 5, 5, 5, 5 }; //kuo 20170912 ¿¿?¿¿?!
     if (myRank == 0) {
       subTers[1] = 5555;
     }
@@ -615,23 +615,8 @@ public:
 
         migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
         cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
-        //testing
-        //migrateNodes = 1600000;
-        //
-				//kuo testing out msg size start
-				//for (int i = 0; i < peCommOutGlobalCnt.size(); i++)
-				//	cout << "kuo -- outgoing msg size(" << i << "):" << peCommOutGlobalCnt.at(i) << std::endl;
-				//kuo testing out msg size end
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommOutGlobalCnt, dstNetwork, globalZ);
-        // kuo testing start
-				/*for (int i = 0; i < peCommInGlobalCnt.size(); i++) {
-					cout << "kuo -- incoming global msg size(" << i << "):" << peCommInGlobalCnt.at(i) << std::endl;
-					cout << "kuo -- incoming global X msg size(" << i << "):" << peCommInXGlobalCnt.at(i) << std::endl;
-					cout << "kuo -- incoming total msg size(" << i << "):" << peCommInTotalCnt.at(i) << std::endl;
-					cout << "kuo -- incoming total X msg size(" << i << "):" << peCommInXTotalCnt.at(i) << std::endl;
-        }*/
-        //kuo testing end
 				if (myTestNetwork) {
 					dp->findCandidateMessageOutGLDiff(vertexZ,
 							messageDiff, dstNetwork, meanMessage, migrateNodes);
@@ -682,20 +667,8 @@ public:
 				int dstTime = dp->findPEPairLong(&peSSResTimeWithDHT,
 						&ignoreSet, average, &peSSResTimeWithDHT);
         migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
-        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
-        //migrateNodes = 1600000;
-				//kuo testing exec time start
-				//for (int i = 0; i < peSSResTimeWithDHT.size(); i++)
-				//	cout << "kuo -- exec time(" << i << "):" << peSSResTimeWithDHT.at(i) << std::endl;
-				//kuo testing exec time end
-
-				//cout << "PE" << myRank << " paired with " << dstTime << std::endl;
 				bool myTestTime = dp->grubbsTestDouble(timeDiff,
 					&peSSResTimeWithDHT, dstTime, globalZ);
-				/*bool myTestTime = dp->multiGrubbsTestLong(timeDiff, outMsgDiff,
-						inMsgDiff, &peSSResTimeWithDHT, &peCommOutGlobalCnt,
-						&peCommInTotalCnt, dstTime, globalZ);*/
-				//&peCommInGlobalCnt, dstTime, globalZ);
 
 				if (myTestTime) {
 					dp->findCandidatePureExecTime(vertexZ, timeDiff,
@@ -715,16 +688,6 @@ public:
 				double meanMessage = cm->getVerAveResTime();
 				double outMeanMessage = (double) cm->getAveOutCommGlobal(); 
 				double inMeanMessage = (double)peCommInTotalCnt[myRank];
-				//kuo
-				/*long long TotalOutMessage=0, TotalInMessage=0;
-				for (int i = 0; i < peCommInTotalCnt.size(); i++) {
-					TotalInMessage += peCommInTotalCnt[i];
-					TotalOutMessage += peCommOutGlobalCnt[i];
-				}
-				double inMsgPropotion = (double) peCommInTotalCnt[myRank] / TotalInMessage;
-				double outMsgPropotion = (double)peCommOutGlobalCnt[myRank] / TotalOutMessage;
-				double outMsgPer = inMsgPropotion + outMsgPropotion;
-				outMsgPer = outMsgPropotion / outMsgPer;*/
 				double outMsgPer = 0.5;
 				//kuo 
 
@@ -732,8 +695,6 @@ public:
 					&ignoreSet, average, &peSSResTimeWithDHT);
         migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstTime)) * prop;
 
-        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
-        //migrateNodes = 1600000;
 
 				bool myTestMix = dp->multiGrubbsTestLong(outMsgDiff,
 					inMsgDiff, &peCommOutGlobalCnt,
@@ -747,24 +708,6 @@ public:
 				}
 			}
 
-			//if(!myTestNetwork)
-			//Migrate for time
-			/*long long messageDiff = 0;
-			 float meanMessage = cm->getAveOutCommGlobal();
-
-			 int dstNetwork = dp->findPEPairInt(&peCommOutGlobalCnt);
-			 bool myTestNetwork = dp->grubbsTestLong(messageDiff,
-			 &peCommOutGlobalCnt, dstNetwork, globalZ);
-
-			 if (myTestNetwork) {
-			 dp->findCandidateMessageOutGLDiff(vertexZ,
-			 messageDiff, dstNetwork, meanMessage);
-			 if (softOrHard == -1) {
-			 softMigrate(dstNetwork);
-			 } else {
-			 hardMigrate(dstNetwork);
-			 }
-			 }*/
 		}
 		const clock_t stop_Migrate = clock();
 		cout << "PE" << myRank << " migrate planning time = "
@@ -772,12 +715,7 @@ public:
 						/ ((double) CLOCKS_PER_SEC) << std::endl;
 	}
 	bool moveSoftVertex() {
-		//	float dyTime = 0;
-		/*
-		 #ifdef Verbose
-		 const clock_t begin_time = clock();
-		 #endif
-		 */
+
 		int globalSize = 0;
 		if (dm->getSoftDynamicVertexSendSize() == 0) {
 			return false;
@@ -800,17 +738,9 @@ public:
 						INSTANT_PRIORITY, dst);
 
 				globalSize = globalSize + byteSize;
-				//delete (kkk);
+
 			}
-			if (dm->getSoftDynamicVertexSendSize() > 0) {
-				/*
-				 #ifdef Verbose
-				 dyTime= float(clock() - begin_time) / CLOCKS_PER_SEC;
-				 std::cout << "PE"<<myRank<<" -----TIME: VertexMigrate Running Time = "
-				 << dyTime << " for "<<dm->getSoftDynamicVertexSendSize()<< " vertexes." << std::endl;
-				 #endif
-				 */
-			}
+
 			dm->clearSoftDynamicVertexSend();
 			cout << "PE" << myRank << " softMigration+1 move size = "
 					<< globalSize << std::endl;
@@ -818,8 +748,7 @@ public:
 		return true;
 	}
 	void recvSoftVertex(int size, char * data) {
-		//cout << "PE" << myRank << " recvSoftVertex()" << std::endl;
-		//std::cout << "PE" << myRank << " getting soft Vertex " << std::endl;
+
 
 		mObject<K, V1, M> * newVertex = new mObject<K, V1, M>();
 		newVertex->byteDecode(size, data);
@@ -830,36 +759,17 @@ public:
 		}
 	}
 	void recvVertexMigrate(int size, char * data) {
-		/*cout << "PE" << myRank << " recvVertexMigrate() size = " << size
-		 << std::endl;*/
+
 		mObject<K, V1, M> * newVertex = new mObject<K, V1, M>();
 
 		newVertex->byteDecode(size, data);
 
 		K vertex = newVertex->getVertexID();
 
-		/*std::cout << "PE" << myRank << " getting VertexMigrate on K = "
-		 << vertex.getValue() << ":" << dm->vertexExists(vertex)
-		 << std::endl;
-		 */
 
 		if (dm->vertexExists(vertex)) {
 
 			dm->applyUpdate(newVertex);
-
-			//std::cout << "PE" << myRank << " getting VertexMigrate exsists K = " << vertex.getValue() << std::endl;
-			//int index = dm->getVertexIndex(vertex);
-			//mObject<K, V1, M> * oldVertex = dm->getVertexObjByPos(index);
-			//oldVertex->setVertexValue(newVertex->getVertexValue());
-			//oldVertex->setSS(newVertex->getCurrentSS());
-			//if (newVertex->isHalted()) {
-			//	oldVertex->voteToHalt();
-			//}
-			//oldVertex->resetMigrationMark();
-			//newVertex->swapMessageQueue(oldVertex);
-			//dm->setVertexObjByPos(index, newVertex);
-			//dm->registerVertexNBR(newVertex);
-			//delete (oldVertex);
 		} else {
 
 			addNewVertex(newVertex);
@@ -869,7 +779,6 @@ public:
 
 	void softMigrate(int dst) {
 		migrateFail.clear();
-		//cout << "PE" << myRank << " softMigrate()" << std::endl;
 		int globalSize = 0;
 		for (int i = 0; i < dm->getSoftDynamicVertexSendSize(); i++) {
 			int size;
@@ -877,13 +786,10 @@ public:
 					dm->getSoftDynamicVertexSendObjByPos(i);
 			char * rawVertex = transVertex->byteEncode(size, false);
 			mCharArray vertexContainer(size, rawVertex);
-			/*std::cout << "PE" << myRank << " sending K = "
-			 << transVertex->getVertexID().getValue() << std::endl;*/
 			bool msgSent = dataPtr.sc->sendSysMessageValue(SendSoftVertex,
 					vertexContainer, AFTER_DATABUFFER_PRIORITY, dst);
 
 			if (!msgSent) {
-				//dm->getVertexObjByKey(transVertex->getVertexID())->resetMigrationMark();
 				transVertex->resetMigrationMark();
 				migrateFail.insert(transVertex->getVertexID());
 
@@ -901,26 +807,19 @@ public:
 	std::set<K> migrateFail;
 	void hardMigrate(int dst) {
 		const clock_t start_hard_Migrate = clock();
-		//cout << "PE" << myRank << " hardMigrate()" << std::endl;
 		migrateFail.clear();
 		int globalSize = 0;
 		for (int i = 0; i < dm->getSoftDynamicVertexSendSize(); i++) {
-			//K vertex = dm->getSoftDynamicVertexSendObjByPos(i)->getVertexID();
-			//cout << "PE"<<myRank<<" getting rawVertex at "<<i << endl;
 			mObject<K, V1, M> * transVertex =
 					dm->getSoftDynamicVertexSendObjByPos(i);
 
 			int size = 0;
-			//cout << "PE"<<myRank<<" encoding rawVertex "<<((mLong)transVertex->getVertexID()).getValue() << endl;
 			char * rawVertex = transVertex->byteEncode(size, true);
-			//cout << "size = " << size << " transVertex = " << transVertex->getByteSizeMsg() << std::endl;
 			mCharArray vertexContainer(size, rawVertex);
-			//cout << "PE"<<myRank<<" rawVertex "<<((mLong)transVertex->getVertexID()).getValue() << " has size = "<<size<<endl;
 			bool msgSent = dataPtr.sc->sendSysMessageValue(VertexMigrate,
 					vertexContainer, AFTER_DATABUFFER_PRIORITY, dst);
 
 			if (!msgSent) {
-				//dm->getVertexObjByKey(transVertex->getVertexID())->resetMigrationMark();
 				transVertex->resetMigrationMark();
 				migrateFail.insert(transVertex->getVertexID());
 
@@ -929,10 +828,9 @@ public:
 			}
 		}
 
-		//cout << "PE"<<myRank<<" removeMovedVertexs()"<<endl;
+
 		dm->derigsterAllNBRSoftDynamic(&migrateFail);
 		dm->removeMovedVertexs(&migrateFail);
-		//cout << "PE"<<myRank<<" clearSoftDynamicVertexSend()"<<endl;
 		dm->clearSoftDynamicVertexSend();
 		const clock_t stop_hard_Migrate = clock();
 
@@ -993,7 +891,6 @@ public:
 		dataPtr.sysInfo.addCounter("_Graph_Vertex_Size", 0);
 	}
 	void recvAggregator(int size, char * data) {
-		//cout << "PE" << myRank << " recvAggregator()" << std::endl;
 		mKCharArrayPair<A> value;
 		value.byteDecode(size, data);
 		char * ptr = value.getValue().getValue();
@@ -1041,17 +938,13 @@ public:
 
 		dataPtr.uc = new userComm<K, V1, M, A>(&commMang);
 
-		//sc = new sysComm<K, V, A>(&commMang);
-		dht.MapSysComm(dataPtr.sc);
+		//sc = new sysComm<K, V, A>(&commMang);		dht.MapSysComm(dataPtr.sc);
 
 		if (myRank == 0) {
-			cout << "!!!Hello World -- I am Mizan, nice meeting you XD !!!"
-					<< endl;
-      sss2 = time(NULL);
+			sss2 = time(NULL);
 		}
 
-		/*cout << myRank << " subGraphContainer[myRank] = "
-		 << subGraphContainer[myRank]->filePath << endl;*/
+
 		dm = new dataManager<K, V1, M, A>(subGraphContainer[myRank]->filePath,
 				subGraphContainer[myRank]->fileSystemType, storageType);
 		cm = new computeManager<K, V1, M, A>(dm, dataPtr.sc, dataPtr.uc, userST,
@@ -1062,10 +955,7 @@ public:
 
 		dp = new dynamicPartitioner<K, V1, M, A>(dm, cm, myRank, myZ);
 
-		//commMang.MapThreadMananger(&tm);
 		commMang.MapInstances(this, &dht, &tm);
-		//commMang.MapDHT(&dht);
-		//commMang.MapMizan(this);
 
 		(tm.tp).schedule(
 				boost::bind(&comm_manager<K, V1, M, A>::listen_4cmds,
@@ -1157,8 +1047,6 @@ public:
 		}
 	}
 	void appendIncomeQueueNbr(K& src, M& message, DATA_CMDS inOut) {
-//		std::cout << "PE" << myRank << " appendIncomeQueueNbr from "
-//				<< src.getValue() << std::endl;
 		if (acceptGate()) {
 			cm->appendIncomeQueueNbr(src, message, inOut);
 		}
@@ -1196,12 +1084,9 @@ public:
 	}
 
 	void processStealVertex(int size, char * data) {
-		//get known vertex from DM
-		//send it to dst
+
 		mInt id;
 		id.byteDecode(size, data);
-		/*cout << "PE" << myRank << " got steel request from " << id.getValue()
-		 << endl;*/
 		mObject<K, V1, M> * vertexObj;
 
 		bool successfulSend = false;
@@ -1282,4 +1167,4 @@ public:
 	}
 };
 
-#endif /* MIZAN_H_ */
+#endif

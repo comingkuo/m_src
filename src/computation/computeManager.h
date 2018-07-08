@@ -686,12 +686,12 @@ public:
 			cout << "PE" << sc->getRank() << " mc size = " << ijk
 					<< " out from = " << lmo << " time = " << ttt << std::endl;
 		}
-		const clock_t begin_time_vss2 = clock();
+		const clock_t begin_time_vss2 = time(NULL);
 
 		dummy.sendQueue();
 		mmg->sendQueue();
 
-		const clock_t stop_time_vss2 = clock();
+		const clock_t stop_time_vss2 = time(NULL);
 		ttt = ((double) (stop_time_vss2 - begin_time_vss2))
 				/ ((double) CLOCKS_PER_SEC);
 		if (sc->getRank() == 0) {

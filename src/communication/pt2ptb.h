@@ -21,7 +21,7 @@
 #include "../dataManager/dataStructures/data/mLong.h"
 #include "../dataManager/dataStructures/graph/edge.h"
 #include "../computation/computeManager.h"
-#include "../Mizan.h"
+#include "../Core.h"
 #include"../dataManager/dataStructures/data/mCharArrayNoCpy.h"
 
 template<class K, class V1, class M, class A> class DHT;

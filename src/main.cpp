@@ -8,8 +8,8 @@
 
 #define Verbose 1
 
-#include "Mizan.h"
-#include "Mizan.cpp"
+#include "Core.h"
+#include "Core.cpp"
 #include "dataManager/dataManager.h"
 
 #include "unistd.h"

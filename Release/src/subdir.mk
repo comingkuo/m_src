@@ -5,21 +5,21 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/IAggregator.cpp \
-../src/Mizan.cpp \
+../src/Core.cpp \
 ../src/dynamicPartitioner.cpp \
 ../src/main.cpp \
 ../src/unitTest.cpp 
 
 OBJS += \
 ./src/IAggregator.o \
-./src/Mizan.o \
+./src/Core.o \
 ./src/dynamicPartitioner.o \
 ./src/main.o \
 ./src/unitTest.o 
 
 CPP_DEPS += \
 ./src/IAggregator.d \
-./src/Mizan.d \
+./src/Core.d \
 ./src/dynamicPartitioner.d \
 ./src/main.d \
 ./src/unitTest.d 

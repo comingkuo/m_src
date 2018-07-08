@@ -15,7 +15,7 @@
 #include "thread_manager.h"
 #include "../dataManager/dataStructures/data/mLong.h"
 #include "../computation/computeManager.h"
-#include "../Mizan.h"
+#include "../Core.h"
 
 template<class K, class V1, class M, class A> class DHT;
 template<class K, class V1, class M, class A> class Mizan;

@@ -137,82 +137,44 @@ public:
 			string userName, distType partition) {
 		char ** inputBaseFile = (char **) calloc(pCount, sizeof(char *));
 
-		if (diskType == HDFS) {
-			char head[] = "/user/";
-			char mid[] = "/m_output/mizan_";
-			char tail[] = "/part-r-";
+		char head[] = "/user/";
+		char mid[] = "/m_output/mizan_";
+		char tail[] = "/part-r-";
 
-			char buffer[10];
-			sprintf(buffer, "%d", pCount);
+		char buffer[10];
+		sprintf(buffer, "%d", pCount);
 
-			int size = strlen(head) + strlen(mid) + strlen(tail) + 100;
-			for (int i = 0; i < pCount; i++) {
+		int size = strlen(head) + strlen(mid) + strlen(tail) + 100;
+		for (int i = 0; i < pCount; i++) {
 
-				inputBaseFile[i] = (char *) calloc(size, sizeof(char));
-				strcat(inputBaseFile[i], head);
-				strcat(inputBaseFile[i], userName.c_str());
-				strcat(inputBaseFile[i], mid);
-				strcat(inputBaseFile[i], fileName.c_str());
-				if (partition == hashed) {
-					strcat(inputBaseFile[i], "_mhash_");
-				} else if (partition == minCuts) {
-					strcat(inputBaseFile[i], "_minc_");
-				} else if (partition == range) {
-					strcat(inputBaseFile[i], "_mrange_");
-				}
-				strcat(inputBaseFile[i], buffer);
-				strcat(inputBaseFile[i], tail);
-				char buffer2[10];
-				if (i < 10) {
-					sprintf(buffer2, "0000%d", i);
-				} else if (i < 100) {
-					sprintf(buffer2, "000%d", i);
-				} else if (i < 1000) {
-					sprintf(buffer2, "00%d", i);
-				} else if (i < 10000) {
-					sprintf(buffer2, "0%d", i);
-				} else {
-					sprintf(buffer2, "%d", i);
-				}
+			inputBaseFile[i] = (char *) calloc(size, sizeof(char));
+			strcat(inputBaseFile[i], head);
+			strcat(inputBaseFile[i], userName.c_str());
+			strcat(inputBaseFile[i], mid);
+			strcat(inputBaseFile[i], fileName.c_str());
+			if (partition == hashed) {
+				strcat(inputBaseFile[i], "_mhash_");
+			} else if (partition == minCuts) {
+				strcat(inputBaseFile[i], "_minc_");
+			} else if (partition == range) {
+				strcat(inputBaseFile[i], "_mrange_");
+			}
+			strcat(inputBaseFile[i], buffer);
+			strcat(inputBaseFile[i], tail);
+			char buffer2[10];
+			if (i < 10) {
+				sprintf(buffer2, "0000%d", i);
+			} else if (i < 100) {
+				sprintf(buffer2, "000%d", i);
+			} else if (i < 1000) {
+				sprintf(buffer2, "00%d", i);
+			} else if (i < 10000) {
+				sprintf(buffer2, "0%d", i);
+			} else {
+				sprintf(buffer2, "%d", i);
+			}
 				strcat(inputBaseFile[i], buffer2);
 			}
-		} else if (diskType == OS_DISK_ALL) {
-			char mid[] = "mizan_";
-			char tail[] = "/part-r-";
-
-			char buffer[10];
-			sprintf(buffer, "%d", pCount);
-
-			int size = strlen(mid) + strlen(tail) + 100;
-			for (int i = 0; i < pCount; i++) {
-
-				inputBaseFile[i] = (char *) calloc(size, sizeof(char));
-				strcat(inputBaseFile[i], mid);
-				strcat(inputBaseFile[i], fileName.c_str());
-				if (partition == hashed) {
-					strcat(inputBaseFile[i], "_mhash_");
-				} else if (partition == minCuts) {
-					strcat(inputBaseFile[i], "_minc_");
-				} else if (partition == range) {
-					strcat(inputBaseFile[i], "_mrange_");
-				}
-				strcat(inputBaseFile[i], buffer);
-				strcat(inputBaseFile[i], tail);
-				char buffer2[10];
-				if (i < 10) {
-					sprintf(buffer2, "0000%d", i);
-				} else if (i < 100) {
-					sprintf(buffer2, "000%d", i);
-				} else if (i < 1000) {
-					sprintf(buffer2, "00%d", i);
-				} else if (i < 10000) {
-					sprintf(buffer2, "0%d", i);
-				} else {
-					sprintf(buffer2, "%d", i);
-				}
-				strcat(inputBaseFile[i], buffer2);
-			}
-		}
 		return inputBaseFile;
 	}
 };
