@@ -4,7 +4,7 @@
  *  Created on: Mar 9, 2013
  *      Author: refops
  *  Modified on: Feb 1, 2017
- *      Authir: Kuo
+ *      Author: Kuo
  *  Description:
  *      Fix) Can not choose partition type and Migration type.
  */

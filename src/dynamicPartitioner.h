@@ -92,23 +92,12 @@ public:
 
 		double zTime;
 		zTime = (timeStdv / timeAve) * 100;
-//		for(int i=0;i<timeMap->size(); i++)
-//			cout << "kuo line56 dynamicPartitioner.h RANKi=" << i << "  time:" << timeMap->at(i) << endl;
+
 
 		if (zTime > thresholdB) { // 7 is imblanceZ
 			return true;
 		}
 		return false;
-		/*double zTime = 0;
-		for (int i = 0; i < timeMap->size(); i++) {
-			zTime = abs(
-					(double) (((double) timeMap->at(i)) - maxTime)//timeAve)
-							/ (double) timeStdv);
-			if (zTime > imbalanceZ) {
-				return true;
-			}
-		}
-		return false;*/
 	}
 	int partitionMode(std::map<int, long long> * timeMap,
 			std::map<int, long long> * networkMap) {
