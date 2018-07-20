@@ -37,7 +37,7 @@ public:
 		args.algorithm = 1;
 		args.fs = HDFS;
 		args.partition = range;
-		args.migration = MixMigration;
+		args.migration = Migration;
 		args.communication = _pt2ptb;
 		args.superSteps = 20;
 		args.threshold = 15;
@@ -109,7 +109,7 @@ public:
 			if (vm.count("migration")) {
 				migration = vm["migration"].as<int>();
 				if (migration == 1) {
-					args.migration = MixMigration;
+					args.migration = Migration;
 				} else if (migration == 2) {
 					args.migration = NONE;
 				}

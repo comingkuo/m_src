@@ -4,7 +4,7 @@
  *  Created on: Mar 28, 2012
  *      Author: refops
  *  Fix on: Jan 31, 2017
- *		Author: Kou
+ *		Author: Kuo
  *  Description: Main function of GPSer
  */
 
@@ -62,10 +62,7 @@ private:
 
 	std::vector<subGraphSource *> subGraphContainer;
 
-//	std::map<char *, boost::mutex> aggContainerLock;
-//	sysComm<K, V, A> *sc;
-//	systemWideInfo sysInfo;
-//	userComm<K, V, A> * uc;
+
 
 	systemDataPointer<K, V1, M, A> dataPtr;
 
@@ -75,9 +72,10 @@ private:
 	int subGCount;
 	int mySubGCount;
 	int superStepCounter;
+	int prop = 5400;
   
-  time_t sss = 0;//kuo time
-  time_t sss2 = 0;
+    time_t sss = 0;//kuo time
+    time_t sss2 = 0;
 
 	typedef boost::function<void(void)> fun_t;
 	std::map<SYS_CMDS, fun_t> sysGroupMessageContainer;
@@ -138,7 +136,7 @@ public:
 		superStepCounter = 0;
 		userST = inST;
 		commMang.setCommType(commType);
-		dynamicPart = false;
+		dynamicPart = true;
 		//globalZ = 0.95;
 		//myZ = 1.27;
 		myZ = 1.96;		//zscore threshold
@@ -164,11 +162,8 @@ public:
 		init();
 
 	}
-	void setMigration(migrationMode migrate) {// set Migrate type: NONE or MixMigration
-		if (migrate == MixMigration) {
-			configDynamicPart();
-		}
-		// else if(migrate == NONE)
+	void setMigration(migrationMode migrate) {
+		configDynamicPart();
 	}
 	bool isDynamicPartEnabled() {
 		return dynamicPart;
@@ -277,7 +272,6 @@ public:
 			enableVertices = EnableWithMessages;
 		}
 		if (next && iWantToTerminate) {
-      //cout << "TTTTTTTTTTTT276" << endl; //almost use
 			terminateMizan();
 		} else if (next && !iWantToTerminate) {
 
@@ -294,7 +288,6 @@ public:
 		}
 	}
 	void terminateMizan() {
-    //test kuo 20170722
     if(groupVoteToHalt == false) {
 		 //   cout << myRank << "  size!!!!" << peCommInTotalCnt.empty() << endl;
      for(int i = 0; i < peSSResTimeWithDHT.size(); i++) {
@@ -324,7 +317,6 @@ public:
     }
 	}
 	void recvStealBarrier() {
-		//cout << "PE" << myRank << " recvStealBarrier()" << std::endl;
 		if (sysGroupMessageCounter[StealBarrier] == PECount) {
 			sysGroupMessageCounter[StealBarrier] = 0;
 			endOfSSProc();
@@ -346,13 +338,12 @@ public:
 		cm->performDataMutations();
 		bool subTerminate = cm->cleanUp(enableVertices);
 
-    int subTer= (bool)subTerminate;
-    cout << "subTer[" << myRank << "]: " << subTer;
  
 
     int subTerRank = (int)subTerminate;//kuo 20170923
     int rank_size = 10;
     int *subTers = new int[rank_size]();
+    //MPI_Gather(&subTerRank, 1, MPI_INT, subTers, 1, MPI_INT, 0,MPI_COMM_WORLD);
     commMang.gatherMsg(subTers, subTerRank, 0);
     subTerRank=1;
     if (myRank == 0) {
@@ -368,23 +359,29 @@ public:
     delete[] subTers;
 
 
-	if (subTerminate == true && superStepCounter != 1) {
-		terminateMizan();
-	} else {
-		mLong * array = new mLong[8];
-		array[0].setValue(myRank);
-		array[1].setValue(ssActualFinish);
-		array[2].setValue(
-				cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
-		array[3].setValue(
-				cm->getSumInCommLocal() + cm->getSumInCommGlobal());
-		array[4].setValue(cm->getSumOutCommGlobal());
-		array[5].setValue(cm->getSumInCommGlobal());
-		array[6].setValue(cm->getXSumInCommGlobal());
-		array[7].setValue(
-				((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
-		mLongArray value(8, array);
-		      terminate = false; //kuo 20170910
+
+
+
+
+
+		if (subTerminate == true && superStepCounter != 1) {
+			terminateMizan();
+		} else {
+			mLong * array = new mLong[8];
+			array[0].setValue(myRank);
+			array[1].setValue(ssActualFinish);
+			array[2].setValue(
+					cm->getXSumInCommLocal() + cm->getXSumInCommGlobal());
+			array[3].setValue(
+					cm->getSumInCommLocal() + cm->getSumInCommGlobal());
+			array[4].setValue(cm->getSumOutCommGlobal());
+			array[5].setValue(cm->getSumInCommGlobal());
+			array[6].setValue(cm->getXSumInCommGlobal());
+			array[7].setValue(
+					((long) (dm->getAvaliableSystemMemoryPercent() * 100)));
+			mLongArray value(8, array);
+
+      terminate = false; //kuo 20170910
       if(groupVoteToHalt == false) {// kuo 20170910
         for(int i = 0; i < peSSResTimeWithDHT.size(); i++) {
           if(peCommInTotalCnt[i] != 0 || !peCommOutGlobalCnt[i] != 0|| !peCommInXTotalCnt[i]!= 0) {
@@ -416,9 +413,8 @@ public:
 
 		if (myRank == 0) {
 			int theRank = (int) (array[0].getValue());
-		  std::cout << "PE" << theRank
-        << " myRank  " <<myRank << "  " 
-				<< " -----Messages: Actual Finish = "
+		  std::cout << " myRank  " <<myRank << "  " 				
+			  << " -----Messages: Actual Finish = "
 			  << peSSResTimeWithDHT[theRank] << " Global in comm = "
 				<< peCommInXTotalCnt[theRank] << "/"
 				<< peCommInTotalCnt[theRank] << " Global out Comm = "
@@ -537,6 +533,7 @@ public:
 	}
 
 	void dynamicPartition() {
+
 		//cout << "PE" << myRank << " dynamicPartition()" << std::endl;
 		//float meanTime = cm->getVerAveResTime();
 		//float maxTime = cm->getVerMaxResTime();
@@ -545,17 +542,12 @@ public:
 
 		//skip migration counting SS1
 
-		const clock_t start_Migrate = clock();
 
 		double average = 0;
-    int migrateNodes;
-    int prop = 5400; // 0.3 *18000
+		int migrateNodes;
 		bool migrationTest = dp->testForImbalance(&this->peSSResTimeWithDHT,
 				average, thresholdBB);
-		if (myRank == 0) {
-			cout << "PE" << myRank << "Migration test = " << migrationTest
-					<< std::endl;
-		}
+
 
 		//remove extra used memory
 		std::set<int> ignoreSet;
@@ -571,10 +563,7 @@ public:
 					&peCommOutGlobalCnt);
 			int inMsgScore = dp->partitionMode(&this->peSSResTimeWithDHT,
 					&this->peCommInTotalCnt);// kuo modified 12/11/16
-			if (myRank == 8) {
-				std::cout << "Dynamic outMsgScore = " << outMsgScore
-						<< " Dynamic inMsgScore = " << inMsgScore << std::endl;
-			}
+
 
 			if (outMsgScore > inMsgScore) {
 				//Migrate for outMessages
@@ -589,8 +578,7 @@ public:
 				int dstNetwork = dp->findPEPairLong(&peCommOutGlobalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
 
-        migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
-        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
+				migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommOutGlobalCnt, dstNetwork, globalZ);
 				if (myTestNetwork) {
@@ -610,21 +598,12 @@ public:
 				/ (float) dm->vertexSetSize();
 
 				//int dstNetwork = dp->findPEPairLong(&peCommInGlobalCnt);
-				//kuo找配對
 				int dstNetwork = dp->findPEPairLong(&peCommInTotalCnt,
 						&ignoreSet, average, &peSSResTimeWithDHT);
-        migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
-        cout << "kuo---------migrateNodes:" << migrateNodes << std::endl;
-        //migrateNodes = 1600000;
-				//kuo testing in msg size end
-				//kuo算跟配對的差額
+					 migrateNodes = (this->peSSResTimeWithDHT.at(myRank) - this->peSSResTimeWithDHT.at(dstNetwork)) * prop;
+     
 				bool myTestNetwork = dp->grubbsTestLong(messageDiff,
 						&peCommInTotalCnt, dstNetwork, globalZ);
-				//&peCommInGlobalCnt, dstNetwork, globalZ);
-
-      if(myRank == 8) {
-        cout << " 8888 myTestNetwork:" << myTestNetwork <<endl;
-      }
 
 				if (myTestNetwork) {
 					dp->findCandidateMessageInComm(vertexZ,
@@ -685,10 +664,7 @@ public:
 			}
 
 		}
-		const clock_t stop_Migrate = clock();
-		cout << "PE" << myRank << " migrate planning time = "
-				<< ((double) (stop_Migrate - start_Migrate))
-						/ ((double) CLOCKS_PER_SEC) << std::endl;
+
 	}
 	bool moveSoftVertex() {
 

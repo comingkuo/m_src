@@ -105,9 +105,7 @@ public:
       }
     }
 
-    // always vote to halt
-    if(data->getCurrentSS() > maxSuperStep)
-      data->voteToHalt();
+     data->voteToHalt();
   }
 };
 #endif /* SSSP_H_ */

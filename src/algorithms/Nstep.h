@@ -73,9 +73,7 @@ public:
 			}
 		}
 
-		// always vote to halt
 		if (data->getCurrentSS() > maxSuperStep) {
-      //cout << "data->getCurrentSS()" << data->getCurrentSS() << "; maxSuperStep " << maxSuperStep;
 			data->voteToHalt();
     }
 	}

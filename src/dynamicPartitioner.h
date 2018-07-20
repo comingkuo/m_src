@@ -78,7 +78,7 @@ public:
 
 		double tmp = 0;
 
-		//kuo 標準差 start
+
 		double timeStdv = 0;
 		for (int i = 0; i < timeMap->size(); i++) {
 			tmp = pow(timeAve - timeMap->at(i), 2);
@@ -86,18 +86,18 @@ public:
 		}
 		timeStdv = timeStdv / (double) timeMap->size();
 		timeStdv = sqrt(timeStdv);
-		//kuo 標準差 end
 
-		//kuo (Coefficient of Varirance) * 100%
+	
 
 		double zTime;
 		zTime = (timeStdv / timeAve) * 100;
 
 
-		if (zTime > thresholdB) { // 7 is imblanceZ
+		if (zTime > thresholdB) { 
 			return true;
 		}
 		return false;
+
 	}
 	int partitionMode(std::map<int, long long> * timeMap,
 			std::map<int, long long> * networkMap) {
@@ -169,11 +169,7 @@ public:
 			cout << "kuo --- negative correlation!!!\\n";
 
 		correlation = sigmaXY/(sigmaX*sigmaY);
-    /*if(myRank == 0) {
-		  cout << "my rank:" << myRank << " , TimeAve:" << timeAve << "  ,netAve" << networkAve << "   timeVec[0]" << timeVec[0] << "  netVec[0]" << networkVec[0] << endl;
-		  cout << "my rank:" << myRank << " , sigmaX:" << sigmaX << "  ,sigmaY:" << sigmaY << "   ,sigmaXY" << sigmaXY << endl;
-		  cout << "my rank:" << myRank << " , inNout correlation value:" << correlation << endl;
-    }*/
+
 		if (correlation >= 0.7) { // strong linear relationship
       return 3;
     } else if (correlation >= 0.5 && correlation <0.7) {//weak relationship
@@ -190,12 +186,12 @@ public:
 		
 		vector<pair<int, long long>> timeRankPair;
 		for (int i = 0; i < sample->size(); i++)
-			timeRankPair.push_back(make_pair(i, sample->at(i)));// 將rank及migrate objective的配對放入
+			timeRankPair.push_back(make_pair(i, sample->at(i)));
 
 		if (timeRankPair.size() == 0)
 			return myRank;
 
-		sort(timeRankPair.begin(), timeRankPair.end(), //對migrate objective 排序
+		sort(timeRankPair.begin(), timeRankPair.end(), //sorting migrate criteria
 			boost::bind(&std::pair<int, long long>::second, _1) <
 			boost::bind(&std::pair<int, long long>::second, _2));
 
@@ -222,12 +218,9 @@ public:
 		for (int i = 0; i < timeRankPair.size(); i++) {
 			if (timeRankPair[i].first == myRank)
 				myPairPos = timeRankPair[
-					(timeRankPair.size() - 1) - i].first; //找出overloading 與 underloading配對
+					(timeRankPair.size() - 1) - i].first; 
 		}
 
-    if(myRank == 8 ) {
-      cout << "88888888 myPairPos: " << myPairPos <<endl;
-    }
 		if (ignoreList->find(myPairPos) == ignoreList->end()) {
 			  long long temp;
 			  temp = abs(timeCompare->at(myRank) - timeCompare->at(myPairPos));
@@ -235,7 +228,6 @@ public:
 				  return myPairPos;
 		} else {
 
-      cout <<"myPairPos:  NOOOOOOOOOOO" << myPairPos <<endl;
     }
 		return myRank;
 
@@ -275,9 +267,9 @@ public:
 		//kuo 20170316
 
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
-			<< " nodes with TD = " << (timeDiff - sumTime) 
+			<< " nodes  "
 			 << " to "
-			<< dst << " original timeDIff = " << timeDiff << std::endl;
+			<< dst << std::endl;
 		dataManagerPtr->unlockDataManager();
 	}
 	void findCandidateMix(float vertexZ,
@@ -285,7 +277,6 @@ public:
 		dataManagerPtr->lockDataManager();
 
 		//kuo 20170316
-		std::cout << "outDiff = " << outDiff << ", inDiff = " << inDiff << std::endl;
 		long long sumOutMsg = 0;
 		long long sumInMsg = 0;
 		int countNodes = 0;
@@ -318,9 +309,9 @@ public:
 		//kuo 20170316
 
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
-				<< " nodes with TD(out + in) = "
-				<< (outDiff - sumOutMsg) << "+" << (inDiff - sumInMsg) << " to "
-				<< dst << " original MixDIff = " << std::endl;
+			<< " nodes  "
+			<< " to "
+			<< dst << std::endl;
 		dataManagerPtr->unlockDataManager();
 	}
 	void findCandidateMessageInComm(float vertexZ, long long diff,
@@ -356,8 +347,9 @@ public:
 		//kuo 20170316
 
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
-				<< " nodes with TD = " << (diff - sumComm) << " to " << dst
-				<< " original diff = " << diff << std::endl;
+			<< " nodes  "
+			<< " to "
+			<< dst << std::endl;
 
 		dataManagerPtr->unlockDataManager();
 	}
@@ -394,8 +386,9 @@ public:
 		}
 		//kuo 20170316
 		std::cout << "PE" << this->myRank << " want to transfer " << countNodes
-				<< " nodes with TD = " << (diff - sumComm) << " to " << dst
-				<< " original diff = " << diff << std::endl;
+			<< " nodes  "
+			<< " to "
+			<< dst << std::endl;
 
 		dataManagerPtr->unlockDataManager();
 	}

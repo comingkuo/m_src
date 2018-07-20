@@ -2,7 +2,7 @@
 #include "../Icombiner.h"
 #include "../dataManager/dataStructures/data/mLong.h"
 
-class kuotest : public IsuperStep<mLong, mLong, mLong, mLong> {
+class ConnectedComponent : public IsuperStep<mLong, mLong, mLong, mLong> {
 private:
   int a;
 	mLong minVal(mLong A, mLong B) {
@@ -11,7 +11,7 @@ private:
 
 public:
 
-	kuotest(int maxSS) {
+	ConnectedComponent(int maxSS) {
     a = maxSS;
 	}
 	void initialize(userVertexObject<mLong, mLong, mLong, mLong> * data) {
@@ -45,8 +45,5 @@ public:
         }
     }
 
-    if(data->getCurrentSS() >= a) {
-       data->voteToHalt();
-    }
 	}
 };

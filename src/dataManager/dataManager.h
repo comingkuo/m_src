@@ -214,7 +214,7 @@ public:
 					<< inpupGraphPath << std::endl;
 		}
 #ifdef Verbose
-		std::cout << "-----TIME: Data Loading for " << myID << " = " << float( clock () - begin_time ) / CLOCKS_PER_SEC << std::endl;
+
 #endif
 	}
 
@@ -1038,16 +1038,12 @@ public:
 		int blockSize = writer.getConfBlockSize();
 		char * blockData = (char*) calloc(blockSize, sizeof(char));
 		int blockDataPtr = 0;
-    //kuo datasize
-    //cout << "data size:" << data.size()<< "\n";
-    //kuo
+
 
 		for (int i = 0; i < data.size(); i++) {
 			tmp = data[i];
 			string outData = tmp->toString();
-      //kuo
-      //cout << "kuo data:" << outData <<"\n";
-      //kuo
+
 			int strLen = outData.length() + 1;
 			if (blockSize > (blockDataPtr + strLen)) {
 				strcat(blockData, outData.c_str());
